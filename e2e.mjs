@@ -23,8 +23,11 @@ function section(t) { console.log(`\n[${t}]`); }
 const browser = await chromium.launch();
 const page = await browser.newPage({ viewport: { width: 1280, height: 1400 } });
 const errors = [];
-page.on("console", (m) => { if (m.type() === "error") errors.push(m.text()); });
-page.on("pageerror", (e) => errors.push(String(e)));
+// Ignore network/resource noise from the live on-chain panel (external RPC);
+// we only care about app-logic errors here.
+const isNetworkNoise = (t) => /Failed to load resource|net::ERR|ERR_|status of (4|5)\d\d/i.test(t);
+page.on("console", (m) => { if (m.type() === "error" && !isNetworkNoise(m.text())) errors.push(m.text()); });
+page.on("pageerror", (e) => { if (!isNetworkNoise(String(e))) errors.push(String(e)); });
 
 await page.goto(URL, { waitUntil: "networkidle" });
 

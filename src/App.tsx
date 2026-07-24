@@ -1,5 +1,72 @@
-import { useMemo, useReducer, useState } from "react";
+import { useEffect, useMemo, useReducer, useState } from "react";
 import { AgamaSphere, PUBLIC, AGAMA, fmt, type Principal } from "./sphere.ts";
+
+// --- live on-chain deployments (read-only via public RPC; no wallet needed) ---
+const TESTNET_RPC = "https://sui-testnet-rpc.publicnode.com";
+const BACKING_PROOF_ID = "0x4255963ccf1bc10c8ae750e7e17c262bda335ffcc48ae026b88ced83d7549b90";
+const DEVNET_CONF_TOKEN = "0x0adc7586504f5a71be687fc90d30b8be0c174be4014eb58319c05ca921eff71c";
+
+type OnChain = { coverage_bps: string; nav_cents: string; supply_cents: string; updated_epoch: string } | null;
+
+async function fetchBackingProof(): Promise<OnChain> {
+  const res = await fetch(TESTNET_RPC, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "sui_getObject", params: [BACKING_PROOF_ID, { showContent: true }] }),
+  });
+  const j = await res.json();
+  const f = j?.result?.data?.content?.fields;
+  if (!f) return null;
+  return { coverage_bps: f.coverage_bps, nav_cents: f.nav_cents, supply_cents: f.supply_cents, updated_epoch: f.updated_epoch };
+}
+
+function OnChainPanel() {
+  const [data, setData] = useState<OnChain>(null);
+  const [loading, setLoading] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  async function load() {
+    setLoading(true); setErr(null);
+    try { setData(await fetchBackingProof()); } catch (e) { setErr(String(e)); }
+    setLoading(false);
+  }
+  useEffect(() => { load(); }, []);
+  const cov = data ? Number(data.coverage_bps) / 100 : null;
+  return (
+    <section className="onchain">
+      <div className="pane-head">
+        <h3>🔗 Live on Sui <span className="muted">— the twin, on-chain (not simulated)</span></h3>
+        <button className="chip" onClick={load} disabled={loading}>{loading ? "…" : "Refresh from Sui"}</button>
+      </div>
+      <p className="scope">
+        The public twin isn't only in this page — it's posted to a real <code>BackingProof</code> on Sui testnet by{" "}
+        <code>onchain/seam.ts</code>. Confidential agUSD (amounts hidden, ZK) lives on devnet. Both read-only here.
+      </p>
+      {err && <div className="empty">RPC error: {err}</div>}
+      <div className="onchain-grid">
+        <div className="oc-card">
+          <span className="oc-tag testnet">testnet · BackingProof</span>
+          {data ? (
+            <>
+              <div className="oc-cov">{cov}% <small>coverage</small></div>
+              <div className="oc-line">agUSD supply <b>{fmt(Number(data.supply_cents))}</b></div>
+              <div className="oc-line">NAV backing <b>{fmt(Number(data.nav_cents))}</b></div>
+              <div className="oc-line">fully backed <b className={cov! >= 100 ? "g" : "b"}>{cov! >= 100 ? "✓ yes" : "✗ no"}</b></div>
+              <div className="oc-line muted">updated epoch {data.updated_epoch}</div>
+            </>
+          ) : <div className="empty">{loading ? "reading Sui…" : "no data"}</div>}
+          <a className="oc-link" href={`https://suiscan.xyz/testnet/object/${BACKING_PROOF_ID}`} target="_blank" rel="noreferrer">view object ↗</a>
+        </div>
+        <div className="oc-card">
+          <span className="oc-tag devnet">devnet · ConfidentialToken&lt;AGUSD&gt;</span>
+          <div className="oc-line">amounts &amp; balances <b>encrypted</b> (Twisted ElGamal + ZK)</div>
+          <div className="oc-line">register <b>KYC-gated</b> · auditor viewing-key</div>
+          <div className="oc-line muted">the amount-hiding layer — proven at protocol level</div>
+          <a className="oc-link" href={`https://suivision.xyz/object/${DEVNET_CONF_TOKEN}?network=devnet`} target="_blank" rel="noreferrer">view object ↗</a>
+        </div>
+      </div>
+    </section>
+  );
+}
 
 // ---- viewer identities for the private-side toggle ----
 const VIEWERS: { id: Principal; label: string; sub: string }[] = [
@@ -158,6 +225,9 @@ export function App() {
         </section>
       </div>
 
+      {/* Live on-chain */}
+      <OnChainPanel />
+
       {/* Audit */}
       <section className="audit">
         <h3>Audit log <span className="muted">— append-only</span></h3>
@@ -174,7 +244,7 @@ export function App() {
       </section>
 
       <footer className="foot">
-        Pattern mirrors Mysten Labs' own Spheres demo (abhinavg6). The <code>publicTwin()</code> seam is the single swap point for a real Spheres SDK — nothing else changes. <b>Confidential transfers</b> (confirmed coming to Sui, Jun 2026) will hide on-chain amounts too.
+        Pattern mirrors Mysten Labs' own Spheres demo (abhinavg6). The <code>publicTwin()</code> seam is the single swap point for a real Spheres SDK. agUSD is <b>deployed for real</b>: a confidential token on Sui devnet (amounts hidden — Twisted ElGamal + ZK) and a regulated coin + on-chain <code>BackingProof</code> on testnet.
       </footer>
     </div>
   );
