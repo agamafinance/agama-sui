@@ -29,6 +29,12 @@ The seam is not just simulated — the public projection is **live on Sui**:
   twin, and posts it into the on-chain `BackingProof` — private positions stay
   in the Sphere, only the aggregate proof crosses.
   `node --experimental-strip-types onchain/seam.ts`
+- **The amount-hiding crypto, running locally** (`onchain/wasm/`): the
+  bulletproofs / ristretto255 range proofs behind confidential agUSD, prebuilt
+  to WebAssembly and runnable with no toolchain — `node onchain/wasm/proof-test.mjs`
+  (generates + verifies a ZK range proof over a hidden amount). The full SDK
+  crypto suite passes locally (56/56). See `onchain/wasm/README.md` for the
+  build (Apple clang has no wasm target; built via Linux clang in Docker).
 
 Move sources: `onchain/agusd-move/` (devnet confidential) and
 `onchain/agusd-testnet/` (testnet regulated). Built with the `sui@devnet` /
