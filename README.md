@@ -35,6 +35,11 @@ The seam is not just simulated — the public projection is **live on Sui**:
   (generates + verifies a ZK range proof over a hidden amount). The full SDK
   crypto suite passes locally (56/56). See `onchain/wasm/README.md` for the
   build (Apple clang has no wasm target; built via Linux clang in Docker).
+- **The full confidential flow, verified on devnet** (`onchain/confidential-demo.mts`):
+  a fresh KYC-whitelisted LP registers, mints agUSD, wraps it into its shielded
+  balance and merges — the amount is stored on-chain as ElGamal ciphertexts and
+  recovered only with the viewing key (decrypts to `100.00 agUSD`). Every step is
+  a real devnet transaction. See `onchain/CONFIDENTIAL-DEMO.md` for the run + digests.
 
 Move sources: `onchain/agusd-move/` (devnet confidential) and
 `onchain/agusd-testnet/` (testnet regulated). Built with the `sui@devnet` /
