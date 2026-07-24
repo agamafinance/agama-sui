@@ -87,8 +87,8 @@ body { background: var(--bg); color: var(--text); font-family: system-ui, -apple
 
 .onchain { margin-top: 14px; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 16px; border-left: 3px solid var(--acc); }
 .onchain h3 { font-size: 13px; }
-.onchain-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
-@media (max-width: 720px) { .onchain-grid { grid-template-columns: 1fr; } }
+.onchain-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 10px; }
+@media (max-width: 860px) { .onchain-grid { grid-template-columns: 1fr; } }
 .oc-card { background: var(--panel2); border: 1px solid var(--line); border-radius: 10px; padding: 12px; position: relative; }
 .oc-tag { display: inline-block; font-size: 10px; font-weight: 700; letter-spacing: .4px; text-transform: uppercase; padding: 2px 7px; border-radius: 6px; margin-bottom: 8px; }
 .oc-tag.testnet { background: var(--acc-dim); color: var(--acc); }

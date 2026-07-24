@@ -5,28 +5,43 @@ import { AgamaSphere, PUBLIC, AGAMA, fmt, type Principal } from "./sphere.ts";
 const TESTNET_RPC = "https://sui-testnet-rpc.publicnode.com";
 const BACKING_PROOF_ID = "0x2e5546184456268acffd13abbafaf6d16140fbdd7707b0c2eea1f139382ae99a";
 const DEVNET_CONF_TOKEN = "0x0adc7586504f5a71be687fc90d30b8be0c174be4014eb58319c05ca921eff71c";
+const STAKING_VAULT = "0x1aa810086f06e8fcf35b58b9f4f81db94eed51771e3447e680172fbafdd31d0a";
 
-type OnChain = { coverage_bps: string; nav_cents: string; supply_cents: string; updated_epoch: string } | null;
-
-async function fetchBackingProof(): Promise<OnChain> {
+async function rpcObject(id: string): Promise<any> {
   const res = await fetch(TESTNET_RPC, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "sui_getObject", params: [BACKING_PROOF_ID, { showContent: true }] }),
+    body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "sui_getObject", params: [id, { showContent: true }] }),
   });
-  const j = await res.json();
-  const f = j?.result?.data?.content?.fields;
+  return (await res.json())?.result?.data?.content?.fields ?? null;
+}
+
+type OnChain = { coverage_bps: string; nav_cents: string; supply_cents: string; updated_epoch: string } | null;
+async function fetchBackingProof(): Promise<OnChain> {
+  const f = await rpcObject(BACKING_PROOF_ID);
+  return f ? { coverage_bps: f.coverage_bps, nav_cents: f.nav_cents, supply_cents: f.supply_cents, updated_epoch: f.updated_epoch } : null;
+}
+
+type Vault = { navBps: number; assets: number; shares: number } | null;
+async function fetchVault(): Promise<Vault> {
+  const f = await rpcObject(STAKING_VAULT);
   if (!f) return null;
-  return { coverage_bps: f.coverage_bps, nav_cents: f.nav_cents, supply_cents: f.supply_cents, updated_epoch: f.updated_epoch };
+  const assets = Number(f.assets);
+  const shares = Number(f.treasury?.fields?.total_supply?.fields?.value ?? 0);
+  return { navBps: shares === 0 ? 10000 : Math.round((assets * 10000) / shares), assets, shares };
 }
 
 function OnChainPanel() {
   const [data, setData] = useState<OnChain>(null);
+  const [vault, setVault] = useState<Vault>(null);
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   async function load() {
     setLoading(true); setErr(null);
-    try { setData(await fetchBackingProof()); } catch (e) { setErr(String(e)); }
+    try {
+      const [bp, v] = await Promise.all([fetchBackingProof(), fetchVault()]);
+      setData(bp); setVault(v);
+    } catch (e) { setErr(String(e)); }
     setLoading(false);
   }
   useEffect(() => { load(); }, []);
@@ -55,6 +70,18 @@ function OnChainPanel() {
             </>
           ) : <div className="empty">{loading ? "reading Sui…" : "no data"}</div>}
           <a className="oc-link" href={`https://suiscan.xyz/testnet/object/${BACKING_PROOF_ID}`} target="_blank" rel="noreferrer">view object ↗</a>
+        </div>
+        <div className="oc-card">
+          <span className="oc-tag testnet">testnet · sagUSD StakingVault</span>
+          {vault ? (
+            <>
+              <div className="oc-cov">{(vault.navBps / 10000).toFixed(4)} <small>NAV / sagUSD</small></div>
+              <div className="oc-line">staked <b>{(vault.assets / 1e6).toLocaleString("en-US")} agUSD</b></div>
+              <div className="oc-line">shares <b>{(vault.shares / 1e6).toLocaleString("en-US")} sagUSD</b></div>
+              <div className="oc-line muted">yield-bearing · stake/unstake priced at NAV (not 1:1)</div>
+            </>
+          ) : <div className="empty">{loading ? "reading Sui…" : "vault empty (NAV 1.0000)"}</div>}
+          <a className="oc-link" href={`https://suiscan.xyz/testnet/object/${STAKING_VAULT}`} target="_blank" rel="noreferrer">view object ↗</a>
         </div>
         <div className="oc-card">
           <span className="oc-tag devnet">devnet · ConfidentialToken&lt;AGUSD&gt;</span>
