@@ -21,10 +21,13 @@ The seam is not just simulated — the public projection is **live on Sui**:
   transfer amounts hidden with **Twisted ElGamal + ZK**, KYC-whitelist-gated
   register, auditor viewing-key + freeze/seize. Package
   `0x466f40a0…159138e0`, `ConfidentialToken<AGUSD>` `0x0adc7586…81f971f`.
-- **Regulated agUSD + BackingProof — Sui testnet** (`onchain/TESTNET.md`): the
-  prize-qualifying public layer. Regulated Coin (KYC denylist) + a shared
-  `BackingProof`. Package `0x61b4933a…99b5291`, proof `0x4255963c…d7549b90`
-  (verified reading `coverage_bps = 10200` = 102%).
+- **agUSD + sagUSD — Sui testnet** (`onchain/TESTNET.md`): the prize-qualifying
+  public layer. **agUSD** is a Regulated Coin (KYC denylist) with a shared
+  `BackingProof` (verified `coverage_bps = 10200` = 102%). **sagUSD** is the
+  yield-bearing staked agUSD — an ERC-4626-style `StakingVault` where
+  stake/unstake are priced at NAV (not 1:1) and the Allocation Engine books
+  yield via `accrue_yield`. Verified end-to-end: stake 100 agUSD → accrue yield →
+  unstake **120 agUSD** (`onchain/sagusd-demo.mts`). Package `0x1a4a046b…7f3c0d30`.
 - **The seam, made real** (`onchain/seam.ts`): drives the Sphere, computes the
   twin, and posts it into the on-chain `BackingProof` — private positions stay
   in the Sphere, only the aggregate proof crosses.

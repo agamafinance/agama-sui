@@ -3,7 +3,7 @@ import { AgamaSphere, PUBLIC, AGAMA, fmt, type Principal } from "./sphere.ts";
 
 // --- live on-chain deployments (read-only via public RPC; no wallet needed) ---
 const TESTNET_RPC = "https://sui-testnet-rpc.publicnode.com";
-const BACKING_PROOF_ID = "0x4255963ccf1bc10c8ae750e7e17c262bda335ffcc48ae026b88ced83d7549b90";
+const BACKING_PROOF_ID = "0x2e5546184456268acffd13abbafaf6d16140fbdd7707b0c2eea1f139382ae99a";
 const DEVNET_CONF_TOKEN = "0x0adc7586504f5a71be687fc90d30b8be0c174be4014eb58319c05ca921eff71c";
 
 type OnChain = { coverage_bps: string; nav_cents: string; supply_cents: string; updated_epoch: string } | null;

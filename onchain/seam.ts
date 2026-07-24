@@ -15,9 +15,9 @@ import { execFileSync } from "node:child_process";
 import { AgamaSphere } from "../src/sphere.ts";
 
 const SUI = `${process.env.HOME}/.local/bin/sui`;
-const PKG = "0x61b4933a81752e1a60c0ada65338208603d86f2480bb68e5bbd72937a99b5291";
-const ISSUER = "0x2e9714300f500cef1ed7aa9f9f8382b02a58bbbac1d698739d38da724a1c38a0";
-const PROOF = "0x4255963ccf1bc10c8ae750e7e17c262bda335ffcc48ae026b88ced83d7549b90";
+const PKG = "0x1a4a046b88ff6d9c7841ac19f51d71fa95b26d89658e5599fa4acb237f3c0d30";
+const ISSUER = "0x652b7a5980ca3e9e9802de1651420196484800af6f921377259d20a069c58c28";
+const PROOF = "0x2e5546184456268acffd13abbafaf6d16140fbdd7707b0c2eea1f139382ae99a";
 
 // --- 1. Private side: run the Sphere (nobody outside sees any of this) ---
 const s = new AgamaSphere();
