@@ -1,0 +1,24 @@
+{
+  "name": "agama-sphere",
+  "private": true,
+  "type": "module",
+  "description": "Agama private-credit vaults on the Sui Spheres pattern — private LP positions, agUSD synthetic dollar, redacted public twin. Mirrors Mysten's own Spheres demo pattern.",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview --port 5178",
+    "smoke": "node --experimental-strip-types smoke.ts"
+  },
+  "dependencies": {
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.61.1",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@vitejs/plugin-react": "^4.3.4",
+    "typescript": "^5.7.2",
+    "vite": "^6.0.7"
+  }
+}

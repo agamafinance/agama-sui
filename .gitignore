@@ -1,0 +1,26 @@
+# deps & build
+node_modules/
+dist/
+dist-smoke/
+build/
+*.tsbuildinfo
+
+# tests / artifacts
+e2e-shots/
+playwright-report/
+test-results/
+
+# Move build output
+onchain/**/build/
+onchain/**/Move.lock
+
+# sui / keys — never commit
+.sui/
+*.key
+*.keystore
+.env
+.env.*
+
+# logs & os
+*.log
+.DS_Store

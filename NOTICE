@@ -1,0 +1,16 @@
+Agama × Sui — private-credit synthetic dollar on Sui
+Copyright 2026 Agama Finance
+
+This product includes software derived from:
+
+  Confidential Transfers on Sui
+  Copyright (c) Mysten Labs, Inc.
+  https://github.com/MystenLabs/confidential-transfers
+  Licensed under the Apache License, Version 2.0.
+
+The Move modules under onchain/agusd-move/ (usdc.move, agusd.move,
+confidential_agusd.move) are adapted from that repository's `closed_loop`
+example, renamed to Agama's economics (agUSD / USDC / KYC whitelist).
+
+The Sphere simulation pattern (src/sphere.ts) mirrors the public Sui Spheres
+demos by Abhinav Garg (Mysten Labs), https://github.com/abhinavg6.
