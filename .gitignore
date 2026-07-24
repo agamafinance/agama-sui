@@ -24,3 +24,7 @@ onchain/**/Move.lock
 # logs & os
 *.log
 .DS_Store
+
+# generated on publish (canonical IDs live in DEVNET.md / TESTNET.md)
+onchain/**/Published.toml
+*.bak
