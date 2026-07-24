@@ -15,9 +15,9 @@ import { execFileSync } from "node:child_process";
 import { AgamaSphere } from "../src/sphere.ts";
 
 const SUI = `${process.env.HOME}/.local/bin/sui`;
-const PKG = "0x1a4a046b88ff6d9c7841ac19f51d71fa95b26d89658e5599fa4acb237f3c0d30";
-const ISSUER = "0x652b7a5980ca3e9e9802de1651420196484800af6f921377259d20a069c58c28";
-const PROOF = "0x2e5546184456268acffd13abbafaf6d16140fbdd7707b0c2eea1f139382ae99a";
+const PKG = "0x9c98876d3baceb06ee51ac787f989397d589f25cb2bd25076819c279f686dffc";
+const ADMIN = "0xdfef46553fb3a1598adacb6b6e7a2dc35840e6cfcb0f320eb9560fb34bbafbb5";
+const PROOF = "0xd9f6edacb75cd17bc3ebf1220c806dfb5d6f4e9067cd509c21260ceeb7a8fe72";
 
 // --- 1. Private side: run the Sphere (nobody outside sees any of this) ---
 const s = new AgamaSphere();
@@ -44,7 +44,7 @@ console.log("\nPosting to Sui testnet BackingProof …");
 const out = execFileSync(SUI, [
   "client", "call",
   "--package", PKG, "--module", "agusd", "--function", "publish_backing",
-  "--args", ISSUER, PROOF, String(twin.nav_cents), String(twin.agusd_supply_cents), twin.backing_commitment,
+  "--args", ADMIN, PROOF, String(twin.nav_cents), String(twin.agusd_supply_cents), twin.backing_commitment,
   "--json",
 ], { encoding: "utf8" });
 const digest = JSON.parse(out.slice(out.indexOf("{"))).digest;

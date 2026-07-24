@@ -12,42 +12,32 @@ Mysten's PM does — the Sphere is simulated locally behind a single seam
 Spheres SDK lands, only that seam is reimplemented against the Sphere/Mainnet
 RPC; nothing else changes.
 
-## On-chain (real, deployed)
+## On-chain (real, all on Sui testnet)
 
-The seam is not just simulated — the public projection is **live on Sui**:
+**Everything runs on one network — Sui testnet — in one Move package.** Full ID
+list + verification in [`onchain/DEPLOYMENT.md`](onchain/DEPLOYMENT.md).
 
-- **Confidential agUSD — Sui devnet** (`onchain/DEVNET.md`): agUSD as a
-  Confidential Token on Mysten's Confidential Transfers framework — balances and
-  transfer amounts hidden with **Twisted ElGamal + ZK**, KYC-whitelist-gated
-  register, auditor viewing-key + freeze/seize. Package
-  `0x466f40a0…159138e0`, `ConfidentialToken<AGUSD>` `0x0adc7586…81f971f`.
-- **agUSD + sagUSD — Sui testnet** (`onchain/TESTNET.md`): the prize-qualifying
-  public layer. **agUSD** is a Regulated Coin (KYC denylist) with a shared
-  `BackingProof` (verified `coverage_bps = 10200` = 102%). **sagUSD** is the
-  yield-bearing staked agUSD — an ERC-4626-style `StakingVault` where
-  stake/unstake are priced at NAV (not 1:1) and the Allocation Engine books
-  yield via `accrue_yield`. Verified end-to-end: stake 100 agUSD → accrue yield →
-  unstake **120 agUSD** (`onchain/sagusd-demo.mts`). Package `0x1a4a046b…7f3c0d30`.
-- **The seam, made real** (`onchain/seam.ts`): drives the Sphere, computes the
-  twin, and posts it into the on-chain `BackingProof` — private positions stay
-  in the Sphere, only the aggregate proof crosses.
-  `node --experimental-strip-types onchain/seam.ts`
-- **The amount-hiding crypto, running locally** (`onchain/wasm/`): the
-  bulletproofs / ristretto255 range proofs behind confidential agUSD, prebuilt
-  to WebAssembly and runnable with no toolchain — `node onchain/wasm/proof-test.mjs`
-  (generates + verifies a ZK range proof over a hidden amount). The full SDK
-  crypto suite passes locally (56/56). See `onchain/wasm/README.md` for the
-  build (Apple clang has no wasm target; built via Linux clang in Docker).
-- **The full confidential flow, verified on devnet** (`onchain/confidential-demo.mts`):
-  a fresh KYC-whitelisted LP registers, mints agUSD, wraps it into its shielded
-  balance and merges — the amount is stored on-chain as ElGamal ciphertexts and
-  recovered only with the viewing key (decrypts to `100.00 agUSD`). Every step is
-  a real devnet transaction. See `onchain/CONFIDENTIAL-DEMO.md` for the run + digests.
+- **The three tokens, one package** (`onchain/agusd-move/`): **agUSD** (pool-backed
+  1:1 with USDC), **sagUSD** (yield-bearing `StakingVault`, stake/unstake priced at
+  NAV — not 1:1 — with `accrue_yield` for the Allocation Engine), and the
+  **confidential agUSD** (Confidential Token — balances & transfer amounts hidden
+  with **Twisted ElGamal + ZK**, KYC-whitelist-gated register, auditor viewing-key).
+  Package `0x9c98876d…f686dffc`.
+- **The seam, made real** (`onchain/seam.ts`): drives the Sphere, computes the twin,
+  and posts it into the on-chain `BackingProof` (coverage **102%**) — private
+  positions stay in the Sphere, only the aggregate crosses.
+- **Confidential flow, verified** (`onchain/confidential-demo.mts`): fresh
+  KYC-whitelisted LP → register → wrap → merge → decrypt = **100.00 agUSD**. The
+  amount lives on-chain as ElGamal ciphertexts, recovered only with the viewing key.
+- **sagUSD yield, verified** (`onchain/sagusd-demo.mts`): stake 100 agUSD → accrue
+  yield → unstake **120 agUSD** (NAV 1.0 → 1.2).
+- **The amount-hiding crypto runs locally** (`onchain/wasm/`): prebuilt bulletproofs
+  wasm — `node onchain/wasm/proof-test.mjs`. Full SDK crypto suite passes (56/56).
+  See `onchain/wasm/README.md` (Apple clang has no wasm target; built via Docker).
 
-Move sources: `onchain/agusd-move/` (devnet confidential) and
-`onchain/agusd-testnet/` (testnet regulated). Built with the `sui@devnet` /
-`sui@testnet` toolchains via `suiup` (the confidential build needs the devnet
-`rangeproofs` native).
+The **UI reads all of it live** from testnet via public RPC (no wallet) — the
+"Live on Sui" panel shows BackingProof 102%, sagUSD NAV 1.2000, and the
+ConfidentialToken, side by side with the simulation.
 
 ## Run
 
@@ -86,9 +76,9 @@ this repo uses the right tool for each:
 
 | Need | Tool | Status |
 |---|---|---|
-| Hide **amounts / balances** of the token on-chain | **Confidential Transfers** (Twisted ElGamal + ZK) | ✅ live, devnet (`onchain/agusd-move`) |
+| Hide **amounts / balances** of the token on-chain | **Confidential Transfers** (Twisted ElGamal + ZK) | ✅ live, testnet (`onchain/agusd-move`) |
 | Hide **who / positions / deal-data / allocation** across parties | **Sphere** (permissioned env + ACL) + Seal + Nautilus | 🟡 simulated (no public SDK yet) |
-| Publicly **prove solvency** without revealing positions | Regulated Coin + on-chain `BackingProof` | ✅ live, testnet (`onchain/agusd-testnet`) |
+| Publicly **prove solvency** without revealing positions | Regulated Coin + on-chain `BackingProof` | ✅ live, testnet (`onchain/agusd-move`) |
 
 A Sphere hides the multi-party underwriting workflow; Confidential Transfers
 hides the dollar's amounts. Together: the vault is private, the dollar is

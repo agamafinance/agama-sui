@@ -31,6 +31,18 @@ public struct Pool has key {
 /// setup — notably initializing the confidential variant.
 public struct AgusdAdminCap has key, store { id: UID }
 
+/// Public, on-chain proof of backing. The private side (the Sphere) posts its
+/// attested NAV / supply / coverage / commitment here — the only thing that
+/// crosses. Anyone verifies agUSD is fully backed without seeing a position.
+public struct BackingProof has key {
+    id: UID,
+    nav_cents: u64,
+    supply_cents: u64,
+    coverage_bps: u64,
+    commitment: vector<u8>,
+    updated_epoch: u64,
+}
+
 fun init(witness: AGUSD, ctx: &mut TxContext) {
     let (initializer, treasury_cap) = coin_registry::new_currency_with_otw(
         witness,
@@ -47,8 +59,36 @@ fun init(witness: AGUSD, ctx: &mut TxContext) {
         usdc_reserve: balance::zero<USDC>(),
         agusd_treasury: treasury_cap,
     });
+    transfer::share_object(BackingProof {
+        id: object::new(ctx),
+        nav_cents: 0,
+        supply_cents: 0,
+        coverage_bps: 10_000,
+        commitment: b"",
+        updated_epoch: 0,
+    });
     transfer::public_transfer(AgusdAdminCap { id: object::new(ctx) }, ctx.sender());
 }
+
+/// The Sphere seam: publish the attested backing figures + commitment. Coverage
+/// is recomputed on-chain from nav/supply, so the proof can't overstate backing.
+public fun publish_backing(
+    _admin: &AgusdAdminCap,
+    proof: &mut BackingProof,
+    nav_cents: u64,
+    supply_cents: u64,
+    commitment: vector<u8>,
+    ctx: &TxContext,
+) {
+    proof.nav_cents = nav_cents;
+    proof.supply_cents = supply_cents;
+    proof.coverage_bps = if (supply_cents == 0) 10_000 else nav_cents * 10_000 / supply_cents;
+    proof.commitment = commitment;
+    proof.updated_epoch = ctx.epoch();
+}
+
+public fun coverage_bps(proof: &BackingProof): u64 { proof.coverage_bps }
+public fun is_fully_backed(proof: &BackingProof): bool { proof.coverage_bps >= 10_000 }
 
 /// Deposit `usdc` into the pool and mint an equal-value `Coin<AGUSD>` (mint).
 public fun mint(pool: &mut Pool, usdc: Coin<USDC>, ctx: &mut TxContext): Coin<AGUSD> {

@@ -92,7 +92,7 @@ body { background: var(--bg); color: var(--text); font-family: system-ui, -apple
 .oc-card { background: var(--panel2); border: 1px solid var(--line); border-radius: 10px; padding: 12px; position: relative; }
 .oc-tag { display: inline-block; font-size: 10px; font-weight: 700; letter-spacing: .4px; text-transform: uppercase; padding: 2px 7px; border-radius: 6px; margin-bottom: 8px; }
 .oc-tag.testnet { background: var(--acc-dim); color: var(--acc); }
-.oc-tag.devnet { background: rgba(255,212,121,.14); color: var(--amber); }
+.oc-tag.conf { background: rgba(255,212,121,.14); color: var(--amber); }
 .oc-cov { font-size: 26px; font-weight: 700; color: var(--acc); font-variant-numeric: tabular-nums; }
 .oc-cov small { font-size: 11px; color: var(--muted); font-weight: 400; }
 .oc-line { font-size: 12.5px; color: var(--text); margin-top: 5px; display: flex; justify-content: space-between; gap: 8px; }

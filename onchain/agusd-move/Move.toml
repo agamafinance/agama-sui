@@ -5,5 +5,3 @@ edition = "2024"
 [dependencies]
 contra = { local = "../../../move" }
 
-[environments]
-devnet = "e5e60035"

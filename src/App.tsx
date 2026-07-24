@@ -3,9 +3,9 @@ import { AgamaSphere, PUBLIC, AGAMA, fmt, type Principal } from "./sphere.ts";
 
 // --- live on-chain deployments (read-only via public RPC; no wallet needed) ---
 const TESTNET_RPC = "https://sui-testnet-rpc.publicnode.com";
-const BACKING_PROOF_ID = "0x2e5546184456268acffd13abbafaf6d16140fbdd7707b0c2eea1f139382ae99a";
-const DEVNET_CONF_TOKEN = "0x0adc7586504f5a71be687fc90d30b8be0c174be4014eb58319c05ca921eff71c";
-const STAKING_VAULT = "0x1aa810086f06e8fcf35b58b9f4f81db94eed51771e3447e680172fbafdd31d0a";
+const BACKING_PROOF_ID = "0xd9f6edacb75cd17bc3ebf1220c806dfb5d6f4e9067cd509c21260ceeb7a8fe72";
+const CONF_TOKEN = "0xd372b544af6ee21d3ce08dd94211f684bde55558dfbeed32decd8407a5c51d44";
+const STAKING_VAULT = "0xb75d1f795617fe7634f2124f3dec4def3229c51e41ec659ca64902823024e7a8";
 
 async function rpcObject(id: string): Promise<any> {
   const res = await fetch(TESTNET_RPC, {
@@ -54,7 +54,7 @@ function OnChainPanel() {
       </div>
       <p className="scope">
         The public twin isn't only in this page — it's posted to a real <code>BackingProof</code> on Sui testnet by{" "}
-        <code>onchain/seam.ts</code>. Confidential agUSD (amounts hidden, ZK) lives on devnet. Both read-only here.
+        <code>onchain/seam.ts</code>. Confidential agUSD (amounts hidden, ZK) lives on the same testnet package. All read-only here.
       </p>
       {err && <div className="empty">RPC error: {err}</div>}
       <div className="onchain-grid">
@@ -84,11 +84,11 @@ function OnChainPanel() {
           <a className="oc-link" href={`https://suiscan.xyz/testnet/object/${STAKING_VAULT}`} target="_blank" rel="noreferrer">view object ↗</a>
         </div>
         <div className="oc-card">
-          <span className="oc-tag devnet">devnet · ConfidentialToken&lt;AGUSD&gt;</span>
+          <span className="oc-tag conf">testnet · ConfidentialToken&lt;AGUSD&gt;</span>
           <div className="oc-line">amounts &amp; balances <b>encrypted</b> (Twisted ElGamal + ZK)</div>
           <div className="oc-line">register <b>KYC-gated</b> · auditor viewing-key</div>
           <div className="oc-line muted">the amount-hiding layer — proven at protocol level</div>
-          <a className="oc-link" href={`https://suivision.xyz/object/${DEVNET_CONF_TOKEN}?network=devnet`} target="_blank" rel="noreferrer">view object ↗</a>
+          <a className="oc-link" href={`https://suiscan.xyz/testnet/object/${CONF_TOKEN}`} target="_blank" rel="noreferrer">view object ↗</a>
         </div>
       </div>
     </section>
@@ -271,7 +271,7 @@ export function App() {
       </section>
 
       <footer className="foot">
-        Pattern mirrors Mysten Labs' own Spheres demo (abhinavg6). The <code>publicTwin()</code> seam is the single swap point for a real Spheres SDK. agUSD is <b>deployed for real</b>: a confidential token on Sui devnet (amounts hidden — Twisted ElGamal + ZK) and a regulated coin + on-chain <code>BackingProof</code> on testnet.
+        Pattern mirrors Mysten Labs' own Spheres demo (abhinavg6). The <code>publicTwin()</code> seam is the single swap point for a real Spheres SDK. agUSD is <b>deployed for real on Sui testnet</b> — one package: a pool-backed dollar, a confidential token (amounts hidden — Twisted ElGamal + ZK), sagUSD staking, and an on-chain <code>BackingProof</code>.
       </footer>
     </div>
   );

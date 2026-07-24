@@ -1,5 +1,5 @@
 /**
- * Confidential agUSD — live on Sui devnet.
+ * Confidential agUSD — live on Sui testnet.
  *
  * A fresh LP each run: admin funds + KYC-whitelists it, then the LP registers a
  * confidential token account, mints agUSD, wraps it into the shielded balance,
@@ -16,15 +16,15 @@ import { DiscreteLogTable } from './src/twisted_elgamal.js';
 import { TokenAccount } from './src/token_account.js';
 import { point } from './src/helpers.js';
 
-const CONTRA_PKG = '0x2b5cd3982ebe5cbf244bf73f4b995764dac30847400361244426145dc686eb4f';
-const ACCOUNT_REGISTRY = '0xec30a3a87e8c77c8c2c2417ae923658bd46bcfa8fe457d958290cb6112cf1330';
-const TOKEN_REGISTRY = '0x750370c126bf8ea3f846d5f910162afc2050e2c5667ef833bc29ffd4e6cedaae';
-const AGUSD_PKG = '0x466f40a01ecb81048174fdc4e2971776b61f6c569990b2ada9657fdd159138e0';
-const POOL = '0x17554400fbccab1e3df8dee0c36052be5be77f12b32f8b1eb694f798ed4af7ae';
-const USDC_TREASURY = '0xa662e769720c70a63a1a5f0d6382b1919039f7adf8073c228b8987296c18441a';
-const CT = '0x0adc7586504f5a71be687fc90d30b8be0c174be4014eb58319c05ca921eff71c';
-const WHITELIST = '0x5d664fb268db88b4e081bed343589ff60b4d21114421d8bbceabb219e8c73cb2';
-const WL_ADMIN_CAP = '0x71408e781d4428aadb889a6fa42713a7cd258676a55ddd7532d54918b50844c1';
+const CONTRA_PKG = '0xfe46e5ce18ba49912585f92de8da2ecdfec0fec918c74b21911628e62b974080';
+const ACCOUNT_REGISTRY = '0x72e8e8a427de42849a3b5e256884972e7e7cf494603c3621a88c6639e83b62c3';
+const TOKEN_REGISTRY = '0xd5c7ff228188100c8d60651e921f644ff6fc85ac3440adbb64a95a2e3ac097fb';
+const AGUSD_PKG = '0x9c98876d3baceb06ee51ac787f989397d589f25cb2bd25076819c279f686dffc';
+const POOL = '0x593ab3affff12565d50fb8a4432605e623f175e811febdb86fe62e99d6c3ad19';
+const USDC_TREASURY = '0x7b2a9f519648b3c5c806dc072920f2bef20070dc25e77d1415ce52c28f52f8ac';
+const CT = '0xd372b544af6ee21d3ce08dd94211f684bde55558dfbeed32decd8407a5c51d44';
+const WHITELIST = '0xfeb070017344698c1afb84b85bb5a4b5c3e455056620a5e478c7f230b1ff39d1';
+const WL_ADMIN_CAP = '0xc392f63bf4eedade8f852760afd8d8af1b2cfb81d070371f010d8caf78d5a02e';
 const AGUSD_TYPE = `${AGUSD_PKG}::agusd::AGUSD`;
 const AMOUNT = 100_000_000n; // 100 agUSD (6dp) — the secret amount
 
@@ -32,7 +32,7 @@ const pkgCfg = { packageId: CONTRA_PKG, accountRegistryId: ACCOUNT_REGISTRY, tok
 const admin = Ed25519Keypair.fromSecretKey(process.env.AGAMA_KEY!);
 const lp = Ed25519Keypair.generate(); // a fresh, KYC'd LP each run
 const LP = lp.toSuiAddress();
-const base = new SuiGrpcClient({ network: 'devnet', baseUrl: 'https://fullnode.devnet.sui.io:443' });
+const base = new SuiGrpcClient({ network: 'testnet', baseUrl: 'https://fullnode.testnet.sui.io:443' });
 const table = DiscreteLogTable.create(16);
 const client = base.$extend(contra({ packageConfig: pkgCfg, table }));
 
@@ -87,4 +87,4 @@ console.log('\n=== RESULT ===');
 console.log('On-chain, the balance lives as ElGamal ciphertexts — no plaintext amount is stored.');
 console.log('Recovered with the viewing key (SDK-side decryption):');
 console.log('  active balance :', bal.balance.amount.toString(), '(= ' + (Number(bal.balance.amount) / 1e6).toFixed(2) + ' agUSD)');
-console.log('\n✓ Amount hidden on-chain, recovered only with the key. Confidential agUSD, live on devnet.');
+console.log('\n✓ Amount hidden on-chain, recovered only with the key. Confidential agUSD, live on testnet.');

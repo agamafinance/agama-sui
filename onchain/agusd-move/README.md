@@ -1,39 +1,37 @@
-# Confidential agUSD (Move, devnet)
+# agUSD — the unified Move package (Sui testnet)
 
-agUSD as a **Confidential Token** on Mysten Labs' Confidential Transfers
-framework (`contra`). Amounts and balances are hidden on-chain via Twisted
-ElGamal + zero-knowledge proofs; `register` is KYC-whitelist-gated.
+One package holds the whole on-chain system. Live IDs in
+[`../DEPLOYMENT.md`](../DEPLOYMENT.md).
 
 - `usdc.move` — test USDC reserve (regulated coin + faucet).
-- `agusd.move` — pool-backed agUSD, 1:1 with USDC (`mint` / `redeem`).
-- `confidential_agusd.move` — KYC-gated confidential variant + `setup_and_keep`.
+- `agusd.move` — pool-backed agUSD (1:1 with USDC), plus the shared
+  `BackingProof` the Sphere posts its attested twin into.
+- `sagusd.move` — sagUSD: yield-bearing `StakingVault`; stake/unstake priced at
+  NAV (not 1:1); `accrue_yield` for the Allocation Engine.
+- `confidential_agusd.move` — KYC-whitelist-gated confidential variant on the
+  Confidential Transfers framework (amounts hidden with Twisted ElGamal + ZK).
 
-Adapted from the `closed_loop` example in
+The `agusd`/`usdc` layer is adapted from the `closed_loop` example in
 [MystenLabs/confidential-transfers](https://github.com/MystenLabs/confidential-transfers)
 (Apache-2.0).
 
-## Live deployment
-
-Deployed and initialized on **Sui devnet** — object IDs and the publish
-transactions are in [`../DEVNET.md`](../DEVNET.md). The confidential build needs
-the devnet `rangeproofs` (bulletproofs) native.
-
 ## Build / deploy (reproduce)
 
-The `contra` framework must be available as a local dependency (see the `contra`
-entry in `Move.toml`). To reproduce:
+Everything is on **testnet** — which supports the `rangeproofs` (bulletproofs)
+native the confidential framework needs (verified by publishing `contra` to
+testnet). No devnet required.
 
 ```bash
-# 1. devnet toolchain (stable homebrew CLI lacks `rangeproofs`)
-suiup install sui@devnet && suiup default set sui@devnet
+suiup install sui@testnet && suiup default set sui@testnet
 
-# 2. get the framework, drop this package under apps/
+# 1. publish the contra framework to testnet (once)
 git clone https://github.com/MystenLabs/confidential-transfers
-cp -r onchain/agusd-move confidential-transfers/apps/agusd/move   # contra = ../../../move
+cd confidential-transfers/move
+sui client switch --env testnet && sui client publish --skip-dependency-verification
 
-# 3. build & publish (devnet resets often — republish contra if the pinned
-#    package id is gone, then this package on top)
+# 2. drop this package under apps/, link contra locally, publish
+cp -r /path/to/agama-sphere/onchain/agusd-move confidential-transfers/apps/agusd/move
 cd confidential-transfers/apps/agusd/move
-sui client switch --env devnet && sui client faucet
 sui client publish --skip-dependency-verification
+# then confidential_agusd::setup_and_keep(AgusdAdminCap, Pool, contra TokenRegistry)
 ```
