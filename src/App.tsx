@@ -1,5 +1,11 @@
 import { useEffect, useMemo, useReducer, useState } from "react";
 import { AgamaSphere, PUBLIC, AGAMA, fmt, type Principal } from "./sphere.ts";
+import { AGAMA_VAULTS } from "./vaults";
+
+// Map the private-credit basket's tranche to the Sphere's A/B/C risk rating.
+const TRANCHE_RR: Record<string, "A" | "B" | "C"> = {
+  "Senior secured": "A", Mezzanine: "C", Diversified: "B",
+};
 
 // --- live on-chain deployments (read-only via public RPC; no wallet needed) ---
 const TESTNET_RPC = "https://sui-testnet-rpc.publicnode.com";
@@ -197,10 +203,28 @@ const VIEWERS: { id: Principal; label: string; sub: string }[] = [
 
 function seed(): AgamaSphere {
   const s = new AgamaSphere();
-  s.addVault({ id: "v-senior", name: "Senior Private Credit", aprBps: 900, concentrationCap: 0.7, originator: "Maple", borrower: "ACME Corp", riskRating: "A" });
-  s.addVault({ id: "v-junior", name: "Junior Tranche", aprBps: 1400, concentrationCap: 0.4, originator: "Qiro", borrower: "Beta LLC", riskRating: "C" });
+  // The six curated private-credit vaults (Tenka & Qiro) that back agUSD.
+  for (const v of AGAMA_VAULTS) {
+    s.addVault({
+      id: v.id,
+      name: `${v.curator} · ${v.name}`,
+      aprBps: Math.round((v.aprLowBps + v.aprHighBps) / 2),
+      concentrationCap: Math.min(1, v.allocBps / 10_000 + 0.05), // cap ≥ target alloc
+      originator: v.curator,
+      borrower: v.strategy,
+      riskRating: TRANCHE_RR[v.tranche],
+    });
+  }
   s.denyKyc("evil");
   return s;
+}
+
+// Allocation Engine: spread the pooled backing across the basket per target alloc.
+function allocateBasket(s: AgamaSphere): { ok: boolean; reason?: string } {
+  const supply = s.outsideView().agusd_supply_cents;
+  let last: { ok: boolean; reason?: string } = { ok: true };
+  for (const v of AGAMA_VAULTS) last = s.allocate(v.id, Math.floor((supply * v.allocBps) / 10_000));
+  return last;
 }
 
 // ---- anonymity demo: three different books, one identical outside view ----
@@ -311,11 +335,10 @@ export function App() {
         <button onClick={() => run("Bob deposited $50k", () => sphere.deposit("bob", 50_000_00))}>Deposit · Bob $50k</button>
         <button className="danger" onClick={() => run("Blocked deposit", () => sphere.deposit("evil", 10_000_00))}>Deposit · KYC-denied ⛔</button>
         <span className="sep" />
-        <button onClick={() => run("Allocated → Senior", () => sphere.allocate("v-senior", 90_000_00))}>Allocate → Senior</button>
-        <button onClick={() => run("Allocated → Junior", () => sphere.allocate("v-junior", 40_000_00))}>Allocate → Junior</button>
-        <button onClick={() => run("Over-cap allocation", () => sphere.allocate("v-junior", 400_000_00))}>Allocate → Junior (over cap)</button>
+        <button onClick={() => run("Allocated across the 6-vault basket", () => allocateBasket(sphere))}>Allocate across basket</button>
+        <button onClick={() => run("Over-cap allocation", () => sphere.allocate("tenka-flagship", 900_000_00))}>Allocate → Flagship (over cap)</button>
         <span className="sep" />
-        <button onClick={() => run("Senior book earned $3k", () => { sphere.accrue("v-senior", 3_000_00); })}>Accrue yield</button>
+        <button onClick={() => run("Tenka Flagship book earned $3k", () => { sphere.accrue("tenka-flagship", 3_000_00); })}>Accrue yield</button>
         <button onClick={() => run("Alice redeemed $40k", () => sphere.redeem("alice", 40_000_00))}>Redeem · Alice $40k</button>
         <button className="ghost" onClick={() => { setSphere(seed()); toast("Reset"); }}>Reset</button>
       </div>
@@ -359,10 +382,10 @@ export function App() {
             <div className="empty">{isPublic ? "Vault originators, borrowers and risk are Sphere-only." : "Not visible to this viewer."}</div>
           ) : (
             <table className="tbl">
-              <thead><tr><th>Vault</th><th>Originator</th><th>Borrower</th><th>Risk</th><th>Deployed</th></tr></thead>
+              <thead><tr><th>Curator · Vault</th><th>Strategy</th><th>Risk</th><th>Deployed</th></tr></thead>
               <tbody>
                 {vaults.map((v) => (
-                  <tr key={v.id}><td>{v.name}</td><td>{v.originator}</td><td>{v.borrower}</td><td><span className={`rr r${v.riskRating}`}>{v.riskRating}</span></td><td className="num">{fmt(v.deployed_cents)}</td></tr>
+                  <tr key={v.id}><td>{v.name}</td><td>{v.borrower}</td><td><span className={`rr r${v.riskRating}`}>{v.riskRating}</span></td><td className="num">{fmt(v.deployed_cents)}</td></tr>
                 ))}
               </tbody>
             </table>
