@@ -7,7 +7,8 @@ import {
   useSignAndExecuteTransaction,
 } from "@mysten/dapp-kit";
 import { Transaction } from "@mysten/sui/transactions";
-import { fromBase64, toHex } from "@mysten/sui/utils";
+import { fromBase64, fromHex, toHex } from "@mysten/sui/utils";
+import { SealClient, SessionKey } from "@mysten/seal";
 import { sha512 } from "@noble/hashes/sha2.js";
 import { contra } from "./contra/client";
 import { DiscreteLogTable } from "./contra/twisted_elgamal";
@@ -40,6 +41,18 @@ const DEMO_RECIPIENT = "0x891a3f96356a7834b77f4c2380d8d05816bb9002b5f82e2032c9ec
 const CONTRA_POOL_AGUSD = "0x5f5439b595d99e1f518348d1ed3fc4c9bb75560d64b691c4e47b3dc083a0ddfd";
 const CONTRA_POOL_SAGUSD = "0xb0f375679d05c2adc502c34bcf8ad9582a5a32a5b49b302573759bae44caa830";
 const RPC = "https://sui-testnet-rpc.publicnode.com";
+// Seal (private deal docs) + Walrus (decentralized storage).
+const SEAL_PKG = "0x78e24bc0a7e5de42d5a6f93dc8d254f75986e4cfab6ea95946680755ecb41ed6";
+const SEAL_POLICY = "0x6983f5ea3f67811beb06ef956a1c457b5fdd979992a753313080c8e8df1792f1";
+const KEY_SERVERS = ["0x73d05d62c18d9374e3ea529e8e0ed6161da1a141a94d3f76ae3fe4e99356db75", "0xf5d14a81a982144ae441cd7d64b09027f116a468bd36e7eca494f750591623c8"];
+const WALRUS_PUBLISHER = "https://publisher.walrus-testnet.walrus.space/v1/blobs?epochs=1";
+const WALRUS_AGGREGATOR = "https://aggregator.walrus-testnet.walrus.space/v1/blobs/";
+// Seal identity = policy_id || owner (so seal_approve binds the doc to you).
+function sealIdentity(owner: string): string {
+  const p = fromHex(SEAL_POLICY.slice(2)); const o = fromHex(owner.slice(2));
+  const out = new Uint8Array(p.length + o.length); out.set(p, 0); out.set(o, p.length);
+  return toHex(out);
+}
 
 // FNV-1a 32-bit — the Sphere's public commitment binds the aggregate only.
 function commitment(s: string): string {
@@ -135,6 +148,9 @@ export function ConfidentialApp() {
   const [registered, setRegistered] = useState(false);
   const [balance, setBalance] = useState<string | null>(null);
   const [sagBalance, setSagBalance] = useState<string | null>(null);
+  const [dealDoc, setDealDoc] = useState("Senior Private Credit · Maple → ACME Corp · $100k · 9% APR · LTV 65%");
+  const [sealBlobId, setSealBlobId] = useState<string | null>(null);
+  const [sealDecrypted, setSealDecrypted] = useState<string | null>(null);
   const [busy, setBusy] = useState("");
   const [log, setLog] = useState<Log[]>([]);
   const owner = account?.address ?? "";
@@ -308,6 +324,45 @@ export function ConfidentialApp() {
     } catch { /* not registered yet */ }
   }
 
+  function sealClient() {
+    return new SealClient({ suiClient: suiClient as any, serverConfigs: KEY_SERVERS.map((objectId) => ({ objectId, weight: 1 })), verifyKeyServers: false });
+  }
+
+  async function sealStore() {
+    setBusy("Seal : chiffrement de ton deal doc (MPC seuil)…");
+    try {
+      const { encryptedObject } = await sealClient().encrypt({ threshold: KEY_SERVERS.length, packageId: SEAL_PKG, id: sealIdentity(owner), data: new TextEncoder().encode(dealDoc) });
+      setBusy("Walrus : stockage décentralisé du blob chiffré…");
+      const put = await fetch(WALRUS_PUBLISHER, { method: "PUT", body: encryptedObject as any });
+      const pj: any = await put.json();
+      const blobId = pj.newlyCreated?.blobObject?.blobId ?? pj.alreadyCertified?.blobId;
+      setSealBlobId(blobId);
+      setSealDecrypted(null);
+      push(`Deal doc chiffré (Seal) + stocké sur Walrus · blob ${String(blobId).slice(0, 14)}…`, true);
+    } catch (e: any) { push("Seal store — " + String(e?.message ?? e).slice(0, 120), false); }
+    setBusy("");
+  }
+
+  async function sealDecrypt() {
+    if (!sealBlobId) return;
+    setBusy("Seal : signature de la SessionKey…");
+    try {
+      const sk = await SessionKey.create({ address: owner, packageId: SEAL_PKG, ttlMin: 10, suiClient: suiClient as any });
+      const { signature } = await signMsg({ message: sk.getPersonalMessage() });
+      await sk.setPersonalMessageSignature(signature);
+      setBusy("Walrus : récupération + déchiffrement Seal…");
+      const got = await fetch(WALRUS_AGGREGATOR + sealBlobId);
+      const ct = new Uint8Array(await got.arrayBuffer());
+      const tx = new Transaction();
+      tx.moveCall({ target: `${SEAL_PKG}::access::seal_approve`, arguments: [tx.pure.vector("u8", Array.from(fromHex(sealIdentity(owner)))), tx.object(SEAL_POLICY)] });
+      const txBytes = await tx.build({ client: suiClient as any, onlyTransactionKind: true });
+      const dec = await sealClient().decrypt({ data: ct, sessionKey: sk, txBytes });
+      setSealDecrypted(new TextDecoder().decode(dec));
+      push("Deal doc déchiffré — tu es autorisé par seal_approve (owner) ✓", true);
+    } catch (e: any) { push("Seal decrypt — " + String(e?.message ?? e).slice(0, 120), false); }
+    setBusy("");
+  }
+
   async function refresh() {
     if (!ta) return;
     setBusy("Déchiffrement de ta balance…");
@@ -375,6 +430,24 @@ export function ConfidentialApp() {
             <button style={{ ...S.btn, ...S.btn2, opacity: registered ? 1 : .4 }} disabled={disabled || !registered} onClick={refresh}>
               ↻ Rafraîchir ma balance déchiffrée
             </button>
+          </div>
+
+          <div style={S.card}>
+            <div style={S.lbl}>⑥ Seal — deal doc privé (chiffré + Walrus)</div>
+            <p style={{ color: "#7f978c", fontSize: 12, margin: "6px 0" }}>Attache les détails de ta position (originator, borrower, terms). Chiffré par <b>Seal</b> (MPC seuil), stocké sur <b>Walrus</b>. Seul toi (ou l'allowlist Agama) peux le lire.</p>
+            <textarea value={dealDoc} onChange={(e) => setDealDoc(e.target.value)} rows={2} style={{ width: "100%", boxSizing: "border-box", background: "#0e1714", color: "#e8f0ea", border: "1px solid rgba(255,255,255,.12)", borderRadius: 8, padding: 10, fontSize: 12.5, fontFamily: "inherit", resize: "vertical" }} />
+            <button style={{ ...S.btn, ...S.btn2 }} disabled={disabled} onClick={sealStore}>⑥ Chiffrer (Seal) + stocker (Walrus)</button>
+            {sealBlobId && (
+              <>
+                <div style={{ fontSize: 11.5, color: "#7f978c", marginTop: 8 }}>blob Walrus <code style={{ color: "#00c805" }}>{sealBlobId.slice(0, 18)}…</code> · bytes publics, contenu Seal-gated</div>
+                <button style={{ ...S.btn, background: "#ffd479", color: "#06140d" }} disabled={disabled} onClick={sealDecrypt}>Déchiffrer (owner autorisé par seal_approve)</button>
+              </>
+            )}
+            {sealDecrypted && (
+              <div style={{ marginTop: 8, background: "rgba(0,200,5,.1)", border: "1px solid rgba(0,200,5,.25)", borderRadius: 8, padding: 10, fontSize: 12.5 }}>
+                🔓 déchiffré (toi seul) : <b>{sealDecrypted}</b>
+              </div>
+            )}
           </div>
 
           {busy && <div style={{ ...S.card, color: "#ffd479", fontSize: 13 }}>⏳ {busy}</div>}
