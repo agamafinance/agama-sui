@@ -37,6 +37,7 @@ export function ConfidentialApp() {
 
   const client = useMemo(() => suiClient.$extend(contra({ packageConfig: pkgCfg, table: DiscreteLogTable.create(16) })), [suiClient]);
   const [vk, setVk] = useState<bigint | null>(null); // viewing key scalar
+  const [registered, setRegistered] = useState(false);
   const [balance, setBalance] = useState<string | null>(null);
   const [busy, setBusy] = useState("");
   const [log, setLog] = useState<Log[]>([]);
@@ -81,6 +82,7 @@ export function ConfidentialApp() {
           arguments: [t.object(CT), t.object(WHITELIST), t.object(client.contra.getAccountId(owner)), point(ta.publicKey.toBytes())],
         });
       });
+      setRegistered(true);
     } catch (e: any) { push("Register — " + String(e?.message ?? e).slice(0, 90), false); }
     setBusy("");
   }
@@ -148,13 +150,13 @@ export function ConfidentialApp() {
             <button style={{ ...S.btn, ...S.btn2, opacity: vk ? .5 : 1 }} disabled={disabled || !!vk} onClick={deriveKey}>
               ① Dériver ma viewing key {vk ? "✓" : ""}
             </button>
-            <button style={{ ...S.btn, ...S.btn2, opacity: vk ? 1 : .4 }} disabled={disabled || !vk} onClick={register}>
-              ② Créer + enregistrer mon compte confidentiel (KYC)
+            <button style={{ ...S.btn, ...S.btn2, opacity: vk && !registered ? 1 : .4 }} disabled={disabled || !vk || registered} onClick={register}>
+              ② Créer + enregistrer mon compte confidentiel (KYC) {registered ? "✓" : ""}
             </button>
-            <button style={{ ...S.btn, opacity: vk ? 1 : .4 }} disabled={disabled || !vk} onClick={depositPrivate}>
+            <button style={{ ...S.btn, opacity: registered ? 1 : .4 }} disabled={disabled || !registered} onClick={depositPrivate}>
               ③ Dépôt privé : USDC → cagUSD (montant caché)
             </button>
-            <button style={{ ...S.btn, ...S.btn2, opacity: vk ? 1 : .4 }} disabled={disabled || !vk} onClick={refresh}>
+            <button style={{ ...S.btn, ...S.btn2, opacity: registered ? 1 : .4 }} disabled={disabled || !registered} onClick={refresh}>
               ↻ Rafraîchir ma balance déchiffrée
             </button>
           </div>
