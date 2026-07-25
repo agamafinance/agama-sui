@@ -86,11 +86,21 @@ export function ConfidentialApp() {
   async function deriveKey() {
     setBusy("Signature de la viewing key…");
     try {
-      const { signature } = await signMsg({ message: new TextEncoder().encode("Agama — confidential viewing key v1") });
-      let s = BigInt("0x" + toHex(sha512(fromBase64(signature)))) % GROUP_ORDER;
-      if (s === 0n) s = 1n;
+      // Persist the viewing key so it's stable across reloads (and immune to any
+      // wallet signature non-determinism) — derived once, reused.
+      const stored = typeof localStorage !== "undefined" ? localStorage.getItem(`agama-vk-${owner}`) : null;
+      let s: bigint;
+      if (stored) {
+        s = BigInt(stored);
+        push("Viewing key chargée (persistée, locale)", true);
+      } else {
+        const { signature } = await signMsg({ message: new TextEncoder().encode("Agama — confidential viewing key v1") });
+        s = BigInt("0x" + toHex(sha512(fromBase64(signature)))) % GROUP_ORDER;
+        if (s === 0n) s = 1n;
+        try { localStorage.setItem(`agama-vk-${owner}`, s.toString()); } catch { /* ignore */ }
+        push("Viewing key dérivée (locale, persistée, jamais envoyée)", true);
+      }
       setVk(s);
-      push("Viewing key dérivée (locale, jamais envoyée)", true);
       // Auto-detect: if the confidential account already exists, skip ② and
       // load the decrypted balance right away.
       setBusy("Vérification de ton compte confidentiel…");
