@@ -86,7 +86,7 @@ function OnChainPanel() {
         <div className="oc-card">
           <span className="oc-tag conf">testnet · ConfidentialToken&lt;AGUSD&gt;</span>
           <div className="oc-line">amounts &amp; balances <b>encrypted</b> (Twisted ElGamal + ZK)</div>
-          <div className="oc-line">register <b>KYC-gated</b> · auditor viewing-key</div>
+          <div className="oc-line">register <b>KYC-gated</b> · issuer freeze controls</div>
           <div className="oc-line muted">the amount-hiding layer — proven at protocol level</div>
           <a className="oc-link" href={`https://suiscan.xyz/testnet/object/${CONF_TOKEN}`} target="_blank" rel="noreferrer">view object ↗</a>
         </div>

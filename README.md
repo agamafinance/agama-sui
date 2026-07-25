@@ -21,7 +21,7 @@ list + verification in [`onchain/DEPLOYMENT.md`](onchain/DEPLOYMENT.md).
   1:1 with USDC), **sagUSD** (yield-bearing `StakingVault`, stake/unstake priced at
   NAV — not 1:1 — with `accrue_yield` for the Allocation Engine), and the
   **confidential agUSD** (Confidential Token — balances & transfer amounts hidden
-  with **Twisted ElGamal + ZK**, KYC-whitelist-gated register, auditor viewing-key).
+  with **Twisted ElGamal + ZK**, KYC-whitelist-gated register, issuer freeze/seize via a held ManagementCap).
   Package `0x9c98876d…f686dffc`.
 - **The seam, made real** (`onchain/seam.ts`): drives the Sphere, computes the twin,
   and posts it into the on-chain `BackingProof` (coverage **102%**) — private
