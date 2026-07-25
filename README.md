@@ -50,16 +50,16 @@ npm run anon     # → 21 passed, 0 failed      (anonymity: different books, one
 npm run build    # → type-checks + production bundle
 ```
 
-**Move contracts.** The two standalone packages build and unit-test from a fresh clone:
+**Move contracts.** All three packages build and unit-test from a fresh clone — **10 Move tests**:
 
 ```bash
-cd onchain/agama-attest && sui move test   # Nautilus: valid / forged / replay / non-admin  (4 passed)
-cd onchain/agama-seal   && sui move test   # Seal seal_approve: owner / allowlist / stranger / bad-id (4 passed)
+cd onchain/agusd-move   && sui move test   # backing invariant (mint/redeem 1:1) + sagUSD NAV 100→110   (2)
+cd onchain/agama-attest && sui move test   # Nautilus: valid / forged / replay / non-admin              (4)
+cd onchain/agama-seal   && sui move test   # Seal seal_approve: owner / allowlist / stranger / bad-id    (4)
 ```
 
-The confidential `agusd` package depends on Mysten's [confidential-transfers](https://github.com/MystenLabs/confidential-transfers)
-framework (`contra`); it is deployed and verified on testnet (see [`onchain/DEPLOYMENT.md`](onchain/DEPLOYMENT.md)),
-and rebuilding it from source requires a toolchain aligned with that repo's package-manager format.
+`agusd-move` pulls Mysten's [confidential-transfers](https://github.com/MystenLabs/confidential-transfers)
+framework (`contra`) as a pinned git dependency, so the confidential layer builds reproducibly.
 The `onchain/*.mts` flow scripts are run from inside a confidential-transfers SDK checkout (they import its TS SDK).
 
 **Privacy is the point.** For the honest threat model — what is anonymous, what is only

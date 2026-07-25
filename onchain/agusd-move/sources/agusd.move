@@ -82,7 +82,8 @@ public fun publish_backing(
 ) {
     proof.nav_cents = nav_cents;
     proof.supply_cents = supply_cents;
-    proof.coverage_bps = if (supply_cents == 0) 10_000 else nav_cents * 10_000 / supply_cents;
+    proof.coverage_bps = if (supply_cents == 0) 10_000
+        else (((nav_cents as u128) * 10_000) / (supply_cents as u128)) as u64;
     proof.commitment = commitment;
     proof.updated_epoch = ctx.epoch();
 }
@@ -124,4 +125,33 @@ public fun init_for_testing(ctx: &mut TxContext): AgusdAdminCap {
         agusd_treasury: cap,
     });
     AgusdAdminCap { id: object::new(ctx) }
+}
+
+// === Tests ===
+
+#[test_only] use sui::test_scenario as ts;
+
+/// The trustless solvency invariant: agUSD supply == USDC reserve, through
+/// both mint and redeem. This is the "proven on-chain" backing.
+#[test]
+fun mint_redeem_preserves_backing() {
+    let admin = @0xA11CE;
+    let mut sc = ts::begin(admin);
+    let cap = init_for_testing(sc.ctx());
+    sc.next_tx(admin);
+    let mut pool = sc.take_shared<Pool>();
+
+    let usdc = coin::mint_for_testing<USDC>(1_000_000, sc.ctx());
+    let ag = mint(&mut pool, usdc, sc.ctx());
+    assert!(reserve_value(&pool) == 1_000_000, 0);      // reserve grew by the deposit
+    assert!(ag.value() == 1_000_000, 1);                // minted 1:1
+
+    let back = redeem(&mut pool, ag, sc.ctx());
+    assert!(reserve_value(&pool) == 0, 2);              // reserve released on redeem
+    assert!(back.value() == 1_000_000, 3);              // got the USDC back 1:1
+
+    coin::burn_for_testing(back);
+    transfer::public_transfer(cap, admin);
+    ts::return_shared(pool);
+    sc.end();
 }

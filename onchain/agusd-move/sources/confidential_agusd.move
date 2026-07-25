@@ -26,6 +26,8 @@ use sui::{group_ops::Element, ristretto255::G, vec_set::{Self, VecSet}};
 // === Errors ===
 
 const ENotWhitelisted: u64 = 0;
+/// Caller is not the owner of the account being registered / rekeyed.
+const ENotOwner: u64 = 1;
 
 // === Constants ===
 
@@ -118,8 +120,8 @@ public fun is_whitelisted(whitelist: &Whitelist, addr: address): bool {
 // === Gated register ===
 
 /// Register a confidential agUSD `TokenAccount` on `account` with public key
-/// `pk`. Callable only by KYC-whitelisted addresses; the caller does not need
-/// to own `account` (an issuer operator may register on behalf of KYCed users).
+/// `pk`. The caller must both be KYC-whitelisted AND own `account` — so nobody
+/// can bind a key to an account they don't control (no register-on-behalf).
 public fun register(
     ct: &ConfidentialToken<AGUSD>,
     whitelist: &Whitelist,
@@ -127,6 +129,7 @@ public fun register(
     pk: Element<G>,
     ctx: &mut TxContext,
 ) {
+    assert!(ctx.sender() == account.owner(), ENotOwner);
     assert!(whitelist.addresses.contains(&ctx.sender()), ENotWhitelisted);
     let auth = ct.authorize_with_witness(REGISTER_OP, account.owner(), AgusdWitness {});
     contra::register(account, &auth, ct, pk, option::none());
@@ -143,6 +146,7 @@ public fun set_public_key(
     rekey_proof: DdhProof,
     ctx: &mut TxContext,
 ) {
+    assert!(ctx.sender() == account.owner(), ENotOwner);
     assert!(whitelist.addresses.contains(&ctx.sender()), ENotWhitelisted);
     let auth = ct.authorize_with_witness(REGISTER_OP, account.owner(), AgusdWitness {});
     contra::set_public_key(account, &auth, ct, new_pk, new_handles, rekey_proof, option::none());

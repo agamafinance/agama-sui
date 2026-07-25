@@ -15,6 +15,10 @@ module agusd::sagusd;
 use agusd::agusd::AGUSD;
 use sui::balance::{Self, Balance};
 use sui::coin::{Self, Coin, TreasuryCap};
+use sui::coin_registry;
+
+/// Unstake attempted against an empty vault (no shares outstanding).
+const EEmptyVault: u64 = 0;
 
 public struct SAGUSD has drop {}
 
@@ -28,16 +32,16 @@ public struct StakingVault has key {
 public struct YieldCap has key, store { id: UID }
 
 fun init(witness: SAGUSD, ctx: &mut TxContext) {
-    let (treasury, metadata) = coin::create_currency(
+    let (initializer, treasury) = coin_registry::new_currency_with_otw(
         witness,
         6,
-        b"sagUSD",
-        b"Staked Agama Dollar",
-        b"Yield-bearing staked agUSD; value accrues with private-credit vaults",
-        option::none(),
+        b"sagUSD".to_string(),
+        b"Staked Agama Dollar".to_string(),
+        b"Yield-bearing staked agUSD; value accrues with private-credit vaults".to_string(),
+        b"".to_string(),
         ctx,
     );
-    transfer::public_freeze_object(metadata);
+    initializer.finalize_and_delete_metadata_cap(ctx);
     transfer::share_object(StakingVault {
         id: object::new(ctx),
         assets: balance::zero<AGUSD>(),
@@ -64,6 +68,7 @@ public fun stake(vault: &mut StakingVault, agusd: Coin<AGUSD>, ctx: &mut TxConte
 public fun unstake(vault: &mut StakingVault, sagusd: Coin<SAGUSD>, ctx: &mut TxContext): Coin<AGUSD> {
     let shares = sagusd.value();
     let total_shares = coin::total_supply(&vault.treasury);
+    assert!(total_shares > 0, EEmptyVault); // defensive: never divide by zero
     let total_assets = vault.assets.value();
     let assets = (((shares as u128) * (total_assets as u128)) / (total_shares as u128)) as u64;
     coin::burn(&mut vault.treasury, sagusd);
@@ -88,3 +93,41 @@ public fun nav_per_share_bps(vault: &StakingVault): u64 {
 
 public fun total_assets(vault: &StakingVault): u64 { vault.assets.value() }
 public fun total_shares(vault: &StakingVault): u64 { coin::total_supply(&vault.treasury) }
+
+// === Tests ===
+
+#[test_only] use sui::test_scenario as ts;
+
+#[test_only]
+public fun init_for_testing(ctx: &mut TxContext): YieldCap {
+    let treasury = coin::create_treasury_cap_for_testing<SAGUSD>(ctx);
+    transfer::share_object(StakingVault { id: object::new(ctx), assets: balance::zero<AGUSD>(), treasury });
+    YieldCap { id: object::new(ctx) }
+}
+
+/// Yield is NAV-priced, not 1:1: stake 100, book 10% yield (only possible with
+/// the YieldCap — no donation path, so no inflation attack), unstake → 110.
+#[test]
+fun stake_accrue_unstake_gives_nav() {
+    let admin = @0xA11CE;
+    let mut sc = ts::begin(admin);
+    let cap = init_for_testing(sc.ctx());
+    sc.next_tx(admin);
+    let mut vault = sc.take_shared<StakingVault>();
+
+    let ag = coin::mint_for_testing<AGUSD>(100, sc.ctx());
+    let shares = stake(&mut vault, ag, sc.ctx());
+    assert!(shares.value() == 100, 0);                 // first staker mints 1:1
+
+    let yield = coin::mint_for_testing<AGUSD>(10, sc.ctx());
+    accrue_yield(&cap, &mut vault, yield);             // YieldCap-gated — the only way to add assets
+    assert!(nav_per_share_bps(&vault) == 11_000, 1);   // NAV rose to 1.1
+
+    let back = unstake(&mut vault, shares, sc.ctx());
+    assert!(back.value() == 110, 2);                   // 100 in → 110 out (NAV-priced)
+
+    coin::burn_for_testing(back);
+    transfer::public_transfer(cap, admin);
+    ts::return_shared(vault);
+    sc.end();
+}
