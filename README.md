@@ -46,8 +46,16 @@ ConfidentialToken, side by side with the simulation.
 npm install
 npm run dev      # → http://localhost:5178   (clickable split-screen demo)
 npm run smoke    # → 24 passed, 0 failed      (headless proof of the core)
+npm run anon     # → 21 passed, 0 failed      (anonymity: different books, one identical outside view)
 npm run build    # → type-checks + production bundle
 ```
+
+**Privacy is the point.** For the honest threat model — what is anonymous, what is only
+confidential, and against whom — see **[`ANONYMITY.md`](ANONYMITY.md)**. Short version:
+the **Sphere** hides *who* (identities & the graph never touch the public chain), while
+**Confidential Transfers** and **Seal** hide *amounts* and *deal data* at the public
+crossing. `onchain/privacy-audit.mts` reads a real testnet tx back to show exactly what
+an observer can and cannot see.
 
 ## What the demo shows
 
@@ -69,6 +77,8 @@ npm run build    # → type-checks + production bundle
 | `src/sphere.ts` | the core — the Sphere that **enforces** ACL reads, bounded authority, the solvency invariant, and builds the public twin. Single source of truth. |
 | `src/App.tsx` | the split-screen UI. |
 | `smoke.ts` | headless test over the same core (24 assertions). |
+| `anon.ts` | anonymity proof — indistinguishability of the outside view (21 assertions). |
+| `ANONYMITY.md` | the honest threat model: what's anonymous vs confidential, and against whom. |
 
 ## Two privacy problems, two tools
 
