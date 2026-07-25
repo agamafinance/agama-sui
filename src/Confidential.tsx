@@ -132,6 +132,11 @@ function SpherePanel() {
         <div style={{ background: "var(--acc-dim, rgba(0,200,5,.12))", border: "1px solid rgba(0,200,5,.25)", borderRadius: 10, padding: "10px 12px", marginTop: 12, fontSize: 12.5, color: "#e8f0ea" }}>
           ✓ Les 3 compositions donnent la <b>même empreinte publique</b> <code style={{ color: "#00c805" }}>{fp}</code>. De l'extérieur, on ne peut pas remonter à <b>qui détient combien</b> — le <b>qui</b> ne traverse jamais la Sphere. (Montants déjà cachés par Confidential Transfers.)
         </div>
+        <div style={{ marginTop: 10, fontSize: 11, color: "#8a97a0", lineHeight: 1.5 }}>
+          Sui Spheres n'a pas encore de SDK public → cette couche est <b>simulée</b>, sur le pattern du PM Mysten{" "}
+          <a href="https://github.com/abhinavg6/sui-spheres-supplychain-finance" target="_blank" rel="noreferrer" style={{ color: "#7aa2c2" }}>@abhinavg6</a>
+          {" "}(son repo est lui-même simulé). Les montants, eux, sont <b>réellement</b> chiffrés on-chain (Confidential Transfers).
+        </div>
       </div>
     </div>
   );

@@ -1,12 +1,26 @@
 /**
  * Agama × Sui Spheres — shared core (the single source of truth).
  *
- * Mirrors the Sui Spheres pattern published by Mysten Labs' own PM
- * (github.com/abhinavg6/sui-spheres-supplychain-finance). Environment-agnostic:
- * the same module powers the headless test (smoke.ts) and the React UI.
+ * CREDIT / PATTERN SOURCE
+ * -----------------------
+ * This module follows the reference Sui Spheres pattern published by
+ * Abhinav Gupta (@abhinavg6), a Product Manager at Mysten Labs:
+ *   https://github.com/abhinavg6/sui-spheres-supplychain-finance
  *
- * The SEAM is `publicTwin()` + the getters below — the only surface a real Sui
- * Spheres SDK would replace (swap the in-memory store for Sphere/Mainnet RPC).
+ * That reference is itself a *simulation* — its README states "Everything is
+ * simulated locally", it ships no Move contracts and no real Spheres SDK,
+ * because Sui Spheres has no public SDK/endpoint yet (design-partners only,
+ * no launch date). Its swap-to-real path: "replace client.ts with a real
+ * Sphere SDK wrapper and delete the mock-server folder."
+ *
+ * We deliberately mirror that same approach here. Our SEAM is `publicTwin()`
+ * + the getters below — the only surface a real Sui Spheres SDK would replace
+ * (swap the in-memory store for a Sphere/Mainnet RPC). Unlike the reference,
+ * Agama then wires this simulated Sphere onto REAL on-chain tech: Confidential
+ * Transfers, Seal and Walrus on Sui testnet (see Confidential.tsx).
+ *
+ * Environment-agnostic: the same module powers the headless test (smoke.ts)
+ * and the React UI.
  */
 
 // ============================================================

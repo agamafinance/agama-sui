@@ -39,6 +39,12 @@ not, and against whom — with reproducible on-chain evidence. No hand-waving.
    governed participants transact privately; *"inside a Sphere coordination happens
    privately; outside, only selected outcomes are made visible"* (Sui Foundation).
    Individual LP activity lives inside — so from the outside there is no person to trace.
+   Sui Spheres has no public SDK yet (design-partners only, no launch date), so — like
+   Mysten's own reference — this layer is **simulated**. We model it on the pattern
+   published by Abhinav Gupta (@abhinavg6), a PM at Mysten Labs:
+   [`sui-spheres-supplychain-finance`](https://github.com/abhinavg6/sui-spheres-supplychain-finance),
+   whose README likewise states *"everything is simulated locally."* Our swap-to-real
+   seam is `publicTwin()` in `src/sphere.ts`. Everything below (2–3) is **real on-chain**.
 2. **Confidential Transfers — amount privacy at the public boundary.** When value does
    cross onto the public L1 (minting/holding public agUSD), amounts are encrypted
    (Twisted ElGamal + ZK). This is the belt-and-suspenders for the public crossing.
