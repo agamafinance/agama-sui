@@ -1,0 +1,7 @@
+# Frontend build only needs index.html + src/. Everything below is source of
+# truth for the on-chain / test side and is not part of the Vite bundle.
+onchain/
+e2e-shots/
+e2e.mjs
+smoke.ts
+anon.ts
