@@ -6,6 +6,7 @@ import { registerEnokiWallets } from "@mysten/enoki";
 import "@mysten/dapp-kit/dist/index.css";
 import { App } from "./App.tsx";
 import { TestApp } from "./Test.tsx";
+import { ConfidentialApp } from "./Confidential.tsx";
 import { ENOKI_API_KEY, GOOGLE_CLIENT_ID } from "./enoki-config";
 import "./styles.css";
 
@@ -32,13 +33,15 @@ function EnokiRegistration() {
 const isDashboard = typeof window !== "undefined" && window.location.hash.replace(/^#\/?/, "") === "dashboard";
 
 function Root() {
-  const [dash, setDash] = React.useState(isDashboard);
+  const [route, setRoute] = React.useState(() => window.location.hash.replace(/^#\/?/, ""));
   React.useEffect(() => {
-    const onHash = () => setDash(window.location.hash.replace(/^#\/?/, "") === "dashboard");
+    const onHash = () => setRoute(window.location.hash.replace(/^#\/?/, ""));
     window.addEventListener("hashchange", onHash);
     return () => window.removeEventListener("hashchange", onHash);
   }, []);
-  return dash ? <App /> : <TestApp />;
+  if (route === "dashboard") return <App />;      // full info dashboard
+  if (route === "lp") return <TestApp />;         // public LP flow
+  return <ConfidentialApp />;                      // default: confidential flow
 }
 
 createRoot(document.getElementById("root")!).render(
