@@ -82,3 +82,17 @@ Verified (`onchain/seal-demo.mts`): a position encrypted for Alice —
 
 This runs on the **same network** (testnet) as Confidential Transfers — a single
 coherent deployment (Mysten's own reference splits Seal/Contra across networks).
+
+## Walrus — decentralized private deal docs (Seal + Walrus)
+
+Deal documents (term sheets, originator data) are encrypted with **Seal**, then
+stored on **Walrus** testnet (decentralized storage). The blob is public bytes,
+but only Seal-authorized parties can read the content.
+
+Verified (`onchain/walrus-seal-demo.mts`): a deal doc encrypted → stored on
+Walrus (`blobId` returned) → retrieved by anyone → but only **owner** and
+**Agama allowlist** decrypt; a **rival pulls the same blob and cannot read it**
+(`NoAccessError`). Canonical Seal + Walrus pattern, both on testnet.
+
+- Walrus testnet publisher: `https://publisher.walrus-testnet.walrus.space`
+- Walrus testnet aggregator: `https://aggregator.walrus-testnet.walrus.space`
