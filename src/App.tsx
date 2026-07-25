@@ -176,6 +176,63 @@ function seed(): AgamaSphere {
   return s;
 }
 
+// ---- anonymity demo: three different books, one identical outside view ----
+const ANON_BOOKS: { key: string; label: string; sub: string; book: [Principal, number][] }[] = [
+  { key: "A", label: "Book A", sub: "3 LPs", book: [["alice", 500_000_00], ["bob", 300_000_00], ["carol", 200_000_00]] },
+  { key: "B", label: "Book B", sub: "other names + split", book: [["xavier", 400_000_00], ["yara", 400_000_00], ["zoe", 200_000_00]] },
+  { key: "C", label: "Book C", sub: "a single whale", book: [["whale", 1_000_000_00]] },
+];
+function buildAnon(book: [Principal, number][]): AgamaSphere {
+  const s = new AgamaSphere();
+  s.addVault({ id: "v-senior", name: "Senior Private Credit", aprBps: 900, concentrationCap: 0.7, originator: "Maple", borrower: "ACME Corp", riskRating: "A" });
+  for (const [lp, amt] of book) s.deposit(lp, amt);
+  s.allocate("v-senior", 600_000_00);
+  return s;
+}
+function AnonymityPanel() {
+  const [sel, setSel] = useState("A");
+  const built = ANON_BOOKS.map((b) => ({ ...b, view: buildAnon(b.book).outsideView() }));
+  const fp = (view: { agusd_supply_cents: number; coverage_ratio: number; backing_commitment: string }) =>
+    `${view.agusd_supply_cents}|${view.coverage_ratio}|${view.backing_commitment}`;
+  const allSame = built.every((b) => fp(b.view) === fp(built[0].view));
+  const cur = built.find((b) => b.key === sel)!;
+  const v = cur.view;
+  return (
+    <section className="anon">
+      <div className="pane-head">
+        <h3>🎭 Can you trace the person? <span className="muted">— three different books, one identical public fingerprint</span></h3>
+      </div>
+      <p className="scope">Switch the book: the <b>inside</b> changes completely — different people, amounts, even a different number of LPs — but the <b>outside</b> (all the chain ever sees) does not move. So an observer cannot invert it back to a person.</p>
+      <div className="viewer-chips">
+        {ANON_BOOKS.map((b) => (
+          <button key={b.key} className={sel === b.key ? "chip on" : "chip"} onClick={() => setSel(b.key)} title={b.sub}>{b.label} · {b.sub}</button>
+        ))}
+      </div>
+      <div className="anon-split">
+        <div className="anon-in">
+          <span className="lbl">Inside the Sphere <small>· {cur.sub}</small></span>
+          <table className="tbl">
+            <thead><tr><th>LP</th><th>Amount</th></tr></thead>
+            <tbody>{cur.book.map(([lp, amt]) => (<tr key={lp}><td>{lp}</td><td className="num">{fmt(amt)}</td></tr>))}</tbody>
+          </table>
+        </div>
+        <div className="anon-arrow">→<small>only the aggregate crosses</small>→</div>
+        <div className="anon-out">
+          <span className="lbl">Outside — what the world sees</span>
+          <div className="stat-grid">
+            <Stat label="agUSD supply" value={fmt(v.agusd_supply_cents)} />
+            <Stat label="Coverage" value={`${(v.coverage_ratio * 100).toFixed(1)}%`} good={v.coverage_ratio >= 1} />
+          </div>
+          <div className="commit"><span className="k">public fingerprint</span><code>{v.backing_commitment}</code></div>
+        </div>
+      </div>
+      <div className={`anon-verdict ${allSame ? "ok" : "bad"}`}>
+        {allSame ? "✓" : "✗"} All three books yield the identical public fingerprint <code>{built[0].view.backing_commitment}</code> — supply, coverage and commitment are byte-for-byte the same. No LP, no amount, no count, no graph leaves the Sphere.
+      </div>
+    </section>
+  );
+}
+
 export function App() {
   const [sphere, setSphere] = useState<AgamaSphere>(seed);
   const [viewer, setViewer] = useState<Principal>(PUBLIC);
@@ -316,6 +373,9 @@ export function App() {
           </div>
         </section>
       </div>
+
+      {/* Anonymity — indistinguishability of the outside view */}
+      <AnonymityPanel />
 
       {/* Live on-chain */}
       <OnChainPanel />
