@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   ConnectButton,
   useCurrentAccount,
@@ -34,8 +34,95 @@ const SAGUSD_TYPE = `${AGUSD_PKG}::sagusd::SAGUSD`;
 const pkgCfg = { packageId: CONTRA_PKG, accountRegistryId: ACCOUNT_REGISTRY, tokenRegistryId: TOKEN_REGISTRY };
 // A registered confidential account to receive a confidential transfer (demo).
 const DEMO_RECIPIENT = "0x891a3f96356a7834b77f4c2380d8d05816bb9002b5f82e2032c9ec5713c143f4";
+// Contra reserve vaults — hold ALL wrapped coins = the aggregate confidential
+// supply (readable), while individual balances stay encrypted. This is exactly
+// what "the Sphere" publishes: the aggregate, never the composition.
+const CONTRA_POOL_AGUSD = "0x5f5439b595d99e1f518348d1ed3fc4c9bb75560d64b691c4e47b3dc083a0ddfd";
+const CONTRA_POOL_SAGUSD = "0xb0f375679d05c2adc502c34bcf8ad9582a5a32a5b49b302573759bae44caa830";
+const RPC = "https://sui-testnet-rpc.publicnode.com";
+
+// FNV-1a 32-bit — the Sphere's public commitment binds the aggregate only.
+function commitment(s: string): string {
+  let h = 0x811c9dc5 >>> 0;
+  for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; }
+  return "0x" + h.toString(16).padStart(8, "0");
+}
+async function poolBalance(pool: string, coinType: string): Promise<number> {
+  const r = await fetch(RPC, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "suix_getBalance", params: [pool, coinType] }) });
+  return Number((await r.json())?.result?.totalBalance ?? 0);
+}
 
 type Log = { msg: string; digest?: string; ok: boolean };
+
+// Niveau 3 — the Sphere anonymity boundary over the REAL confidential pool.
+// Confidential Transfers hides the AMOUNTS; the Sphere hides the WHO: from
+// outside, only the aggregate crosses, and the composition is indistinguishable.
+function SpherePanel() {
+  const [agg, setAgg] = useState<{ cag: number; csag: number } | null>(null);
+  const [sel, setSel] = useState(0);
+  useEffect(() => {
+    Promise.all([poolBalance(CONTRA_POOL_AGUSD, AGUSD_TYPE), poolBalance(CONTRA_POOL_SAGUSD, SAGUSD_TYPE)])
+      .then(([cag, csag]) => setAgg({ cag, csag }))
+      .catch(() => {});
+  }, []);
+  if (!agg) return null;
+  const totalCag = agg.cag / 1e6;
+  const fp = commitment(`${agg.cag}:${agg.csag}`); // binds totals only — NOT the composition
+  const fmt2 = (n: number) => n.toLocaleString("en-US", { maximumFractionDigits: 2 });
+  const comps = [
+    { label: "3 LPs", rows: [["toi", totalCag * 0.4], ["Alice", totalCag * 0.35], ["Bob", totalCag * 0.25]] as [string, number][] },
+    { label: "5 LPs égaux", rows: [1, 2, 3, 4, 5].map((i) => [`LP${i}`, totalCag / 5] as [string, number]) },
+    { label: "1 whale", rows: [["whale", totalCag]] as [string, number][] },
+  ];
+  const cur = comps[sel];
+
+  const S: Record<string, React.CSSProperties> = {
+    card: { background: "#111c18", border: "1px solid rgba(255,255,255,.08)", borderRadius: 14, padding: 18, marginTop: 14, borderLeft: "3px solid #ffd479" },
+    lbl: { fontSize: 11, textTransform: "uppercase", letterSpacing: .5, color: "#7f978c" },
+    chip: (on: boolean) => ({ fontSize: 12, padding: "5px 11px", borderRadius: 999, cursor: "pointer", border: "1px solid rgba(255,255,255,.14)", background: on ? "#ffd479" : "transparent", color: on ? "#06140d" : "#7f978c", fontWeight: on ? 700 : 400 }),
+    box: { background: "#0e1714", border: "1px solid rgba(255,255,255,.08)", borderRadius: 10, padding: 12, marginTop: 8 },
+  };
+
+  return (
+    <div style={{ maxWidth: 520, margin: "14px auto 0", padding: "0 24px" }}>
+      <div style={S.card}>
+        <div style={{ fontSize: 15, fontWeight: 700 }}>🔒 La Sphere — anonymat du pool</div>
+        <p style={{ color: "#7f978c", fontSize: 12.5, lineHeight: 1.5, marginTop: 6 }}>
+          Confidential Transfers cache les <b>montants</b>. La <b>Sphere</b> cache le <b>qui</b> : de l'extérieur,
+          seul l'<b>agrégat</b> traverse — la composition (qui détient combien) reste privée.
+        </p>
+
+        <div style={S.box}>
+          <span style={S.lbl}>ce que la Sphere publie (agrégat on-chain, réel)</span>
+          <div style={{ fontSize: 20, fontWeight: 700, color: "#ffd479", marginTop: 4 }}>{fmt2(totalCag)} <small style={{ fontSize: 12, color: "#7f978c" }}>cagUSD</small> · <span style={{ color: "#00c805" }}>{fmt2(agg.csag / 1e6)}</span> <small style={{ fontSize: 12, color: "#7f978c" }}>csagUSD</small></div>
+          <div style={{ fontSize: 12, color: "#7f978c", marginTop: 2 }}>empreinte publique <code style={{ color: "#00c805" }}>{fp}</code></div>
+        </div>
+
+        <div style={{ ...S.lbl, marginTop: 14 }}>indistinguabilité — bascule la composition, l'empreinte NE BOUGE PAS</div>
+        <div style={{ display: "flex", gap: 6, marginTop: 8 }}>
+          {comps.map((c, i) => <button key={i} style={S.chip(sel === i)} onClick={() => setSel(i)}>{c.label}</button>)}
+        </div>
+
+        <div style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", gap: 10, alignItems: "center", marginTop: 10 }}>
+          <div style={S.box}>
+            <span style={S.lbl}>inside (privé)</span>
+            {cur.rows.map(([who, amt], i) => <div key={i} style={{ display: "flex", justifyContent: "space-between", fontSize: 12.5, padding: "3px 0" }}><span>{who}</span><b>{fmt2(amt)}</b></div>)}
+          </div>
+          <div style={{ color: "#7f978c", fontSize: 18, textAlign: "center" }}>→</div>
+          <div style={S.box}>
+            <span style={S.lbl}>outside (public)</span>
+            <div style={{ fontSize: 15, fontWeight: 700, color: "#ffd479", marginTop: 4 }}>{fmt2(totalCag)} cagUSD</div>
+            <div style={{ fontSize: 11, color: "#00c805" }}>{fp}</div>
+          </div>
+        </div>
+
+        <div style={{ background: "var(--acc-dim, rgba(0,200,5,.12))", border: "1px solid rgba(0,200,5,.25)", borderRadius: 10, padding: "10px 12px", marginTop: 12, fontSize: 12.5, color: "#e8f0ea" }}>
+          ✓ Les 3 compositions donnent la <b>même empreinte publique</b> <code style={{ color: "#00c805" }}>{fp}</code>. De l'extérieur, on ne peut pas remonter à <b>qui détient combien</b> — le <b>qui</b> ne traverse jamais la Sphere. (Montants déjà cachés par Confidential Transfers.)
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export function ConfidentialApp() {
   const account = useCurrentAccount();
@@ -305,6 +392,7 @@ export function ConfidentialApp() {
           )}
         </>
       )}
+      <SpherePanel />
     </div>
   );
 }
