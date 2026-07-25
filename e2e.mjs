@@ -35,9 +35,10 @@ await page.goto(URL, { waitUntil: "networkidle" });
 const btn = (name) => page.getByRole("button", { name, exact: true });
 const shot = (n) => page.screenshot({ path: `${SHOTS}/${n}.png`, fullPage: true });
 async function chip(label) { await page.getByRole("button", { name: label, exact: true }).click(); }
-// read a stat card value by its label
+// read a stat card value by its label (scoped to the public pane — the anon
+// panel also renders .stat cards, so we must disambiguate)
 async function stat(label) {
-  const card = page.locator(".stat", { has: page.locator(".stat-k", { hasText: label }) });
+  const card = page.locator(".pane.public .stat", { has: page.locator(".stat-k", { hasText: label }) });
   return (await card.locator(".stat-v").innerText()).trim();
 }
 async function visibleRows() {
