@@ -17,6 +17,9 @@ export type Principal = string;
 export const PUBLIC: Principal = "*";
 export const AGAMA: Principal[] = ["agama-allocator", "agama-risk"]; // operator team — NOT a god-view
 
+/** Governed participation — real Sui Spheres admits known parties under a role. */
+export type Role = "lp" | "agama-allocator" | "agama-risk" | "auditor";
+
 export type VaultId = string;
 
 export interface Vault {
@@ -73,6 +76,19 @@ export class AgamaSphere {
   private denyList = new Set<Principal>();
   private audit: AuditEvent[] = [];
   private clock = 1;
+  // Governed membership: who is admitted to the Sphere, under which role.
+  // The operator team is seeded; LPs are enrolled on their first deposit.
+  private members = new Map<Principal, Role>([
+    ["agama-allocator", "agama-allocator"],
+    ["agama-risk", "agama-risk"],
+  ]);
+
+  /** Admit a known party to the Sphere under a role (operator-governed). */
+  join(p: Principal, role: Role) { this.members.set(p, role); }
+  roleOf(p: Principal): Role | undefined { return this.members.get(p); }
+  isMember(p: Principal): boolean { return this.members.has(p); }
+  /** How many parties are inside — itself Sphere-private (never crosses the boundary). */
+  memberCount(): number { return this.members.size; }
 
   addVault(v: Omit<Vault, "acl_read" | "deployed_cents" | "accrued_cents">): Vault {
     const vault: Vault = { ...v, deployed_cents: 0, accrued_cents: 0, acl_read: [...AGAMA] };
@@ -116,6 +132,7 @@ export class AgamaSphere {
     { ok: true; position: Position } | { ok: false; reason: string } {
     if (this.denyList.has(lp)) return { ok: false, reason: "KYC deny-list: LP not eligible" };
     if (amount_cents <= 0) return { ok: false, reason: "amount must be positive" };
+    if (!this.members.has(lp)) this.members.set(lp, "lp"); // enrolled inside the Sphere
 
     const position: Position = {
       id: uid("pos"),
@@ -201,7 +218,17 @@ export class AgamaSphere {
   }
 
   // ---------- SEAM: the redacted public twin (all that crosses to Sui) ----------
-  publicTwin(): PublicTwin {
+  /**
+   * The ONLY thing an outside observer (the public Sui chain, a competitor,
+   * a non-member) ever sees. It is a pure function of the AGGREGATES
+   * (nav, supply, redeem rate) — it does not depend on WHO the LPs are, HOW
+   * MANY there are, or HOW the backing is split between them. The commitment
+   * binds the totals only. Two Spheres with the same totals but different LP
+   * identities and different per-LP splits produce a BYTE-IDENTICAL outside
+   * view — so this view cannot be inverted to recover a person. This is the
+   * anonymity boundary: solvency is public, participants are not.
+   */
+  outsideView(): PublicTwin {
     const nav = this.nav_cents();
     const supply = this.agusd_supply_cents;
     const coverage = supply === 0 ? 1 : nav / supply;
@@ -211,13 +238,25 @@ export class AgamaSphere {
       nav_cents: nav,
       sagusd_redeem_rate: Number(this.redeemRate().toFixed(6)),
       coverage_ratio: Number(coverage.toFixed(6)),
-      backing_commitment: commitment(`${nav}:${supply}:${this.positions.length}`),
+      backing_commitment: commitment(`${nav}:${supply}`), // totals only — NOT identities, split, or count
       proofs: [
         { key: "fully_backed", label: "agUSD fully backed by NAV", ok: coverage >= 1 },
         { key: "within_caps", label: "All vaults within concentration caps", ok: capOk },
         { key: "nav_attested", label: "NAV attested (Nautilus TEE)", ok: true },
       ],
     };
+  }
+
+  /** Back-compat alias — the public twin IS the outside view. */
+  publicTwin(): PublicTwin { return this.outsideView(); }
+
+  /**
+   * Defensive anonymity check: every member identity that leaks into the
+   * outside view. MUST always be empty — the boundary is airtight by design.
+   */
+  boundaryLeaks(): Principal[] {
+    const j = JSON.stringify(this.outsideView());
+    return [...this.members.keys()].filter((m) => j.includes(m));
   }
 }
 
