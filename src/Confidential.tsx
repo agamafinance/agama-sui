@@ -64,6 +64,22 @@ export function ConfidentialApp() {
       if (s === 0n) s = 1n;
       setVk(s);
       push("Viewing key dérivée (locale, jamais envoyée)", true);
+      // Auto-detect: if the confidential account already exists, skip ② and
+      // load the decrypted balance right away.
+      setBusy("Vérification de ton compte confidentiel…");
+      const localTa = new TokenAccount(owner, AGUSD_TYPE, pkgCfg, s);
+      try {
+        const bal = await client.contra.getBalance(localTa);
+        setRegistered(true);
+        const amt = (Number(bal.balance.amount) / 1e6).toFixed(2);
+        const pend = (Number(bal.pending?.amount ?? 0) / 1e6).toFixed(2);
+        setBalance(amt);
+        push(`Compte déjà enregistré · balance déchiffrée : ${amt} cagUSD (pending ${pend})`, true);
+      } catch (e: any) {
+        const msg = String(e?.message ?? e);
+        if (/does not exist|DoesNotExist|not exist/i.test(msg)) push("Compte pas encore enregistré → clique ②", true);
+        else push("Lecture balance — " + msg.slice(0, 120), false);
+      }
     } catch (e: any) { push("Viewing key — " + String(e?.message ?? e).slice(0, 80), false); }
     setBusy("");
   }
