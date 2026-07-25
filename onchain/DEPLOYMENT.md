@@ -109,3 +109,20 @@ Real + verified here: the ephemeral key, nonce, and address derivation. The
 **Google login (OAuth → JWT)** is the browser step and needs a Google OAuth
 client id (`GOOGLE_CLIENT_ID`); tx signing then uses the ephemeral key + a ZK
 proof from the Mysten prover. (This is the one piece not fully headless.)
+
+## Nautilus — attested NAV (on-chain verification)
+
+The Allocation Engine / NAV compute runs off-chain in a TEE; the enclave signs
+its output and the chain verifies the signature before accepting it —
+`agama_attest::nav::post_attested_nav` (Ed25519 verify on-chain).
+
+| What | Object ID |
+|---|---|
+| **agama_attest package** | `0xec73650fd7a5815a488f4feffcbe87c1158457cc89853daf5a1d2d785eb0ce52` |
+| **`AttestationRegistry`** | `0x5cb3edcb0ece85c464216dbe3b492ce56b3a73fa5da2b854b5865192e83505e1` |
+
+Verified (`onchain/attest-demo.mts`): a **valid** enclave-signed NAV is accepted
+(`latest_nav_cents` recorded on-chain); a **forged** signature is **rejected**
+(`E_BAD_ATTESTATION`). The on-chain verification is real; the enclave here is a
+stand-in Ed25519 key — in production it's a real **AWS Nitro** enclave whose key
+/ PCR measurements are registered on-chain (that's the remaining infra piece).
