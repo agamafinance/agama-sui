@@ -94,6 +94,12 @@ public fun nav_per_share_bps(vault: &StakingVault): u64 {
 public fun total_assets(vault: &StakingVault): u64 { vault.assets.value() }
 public fun total_shares(vault: &StakingVault): u64 { coin::total_supply(&vault.treasury) }
 
+/// Expose the sagUSD `TreasuryCap` to sibling modules — needed by
+/// `confidential_sagusd` to set up the confidential variant of sagUSD.
+public(package) fun treasury_mut(vault: &mut StakingVault): &mut TreasuryCap<SAGUSD> {
+    &mut vault.treasury
+}
+
 // === Tests ===
 
 #[test_only] use sui::test_scenario as ts;

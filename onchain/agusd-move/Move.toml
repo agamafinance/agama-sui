@@ -3,6 +3,5 @@ name = "agusd"
 edition = "2024"
 
 [dependencies]
-# Sui's Confidential Transfers framework (Twisted ElGamal + ZK) — the module that
-# hides balances/amounts on-chain. Public repo, pinned for reproducible builds.
+# Sui's Confidential Transfers framework (Twisted ElGamal + ZK). Public repo, pinned.
 contra = { git = "https://github.com/MystenLabs/confidential-transfers.git", subdir = "move", rev = "257f9a05d2fcd9468c243cc70fa01cd4a06f1bd0" }

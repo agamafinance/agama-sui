@@ -26,6 +26,11 @@ const USDC_TREASURY = "0x8273756767150666fd12111b11458d063cfa25cec811209e41a427f
 const CT = "0x7cb730a0ee23a1d014b481930c893134a3942d39c623d9a4dd01022e70975bf2";
 const WHITELIST = "0x6b2b8a3e2b85d5e5b7fb6ce557e31e1adf4d9e1c3b1d7b301c125cd3466cd9ae";
 const AGUSD_TYPE = `${AGUSD_PKG}::agusd::AGUSD`;
+// Confidential sagUSD (added by the v2 package upgrade).
+const AGUSD_PKG_V2 = "0x8808bc82c8edf6ac939e428fff780c41b3529acafecdc797f67b9573285ad0b7";
+const CT_SAGUSD = "0x493dee8c5f0aab2f5774f25b7b34cedded6a9930dced8e6121c3268913fac69b";
+const VAULT = "0x29b9146405de04894f1a9e932ed7544965dd934e1460fb63bc524fb699344bc8";
+const SAGUSD_TYPE = `${AGUSD_PKG}::sagusd::SAGUSD`;
 const pkgCfg = { packageId: CONTRA_PKG, accountRegistryId: ACCOUNT_REGISTRY, tokenRegistryId: TOKEN_REGISTRY };
 // A registered confidential account to receive a confidential transfer (demo).
 const DEMO_RECIPIENT = "0x891a3f96356a7834b77f4c2380d8d05816bb9002b5f82e2032c9ec5713c143f4";
@@ -42,10 +47,12 @@ export function ConfidentialApp() {
   const [vk, setVk] = useState<bigint | null>(null); // viewing key scalar
   const [registered, setRegistered] = useState(false);
   const [balance, setBalance] = useState<string | null>(null);
+  const [sagBalance, setSagBalance] = useState<string | null>(null);
   const [busy, setBusy] = useState("");
   const [log, setLog] = useState<Log[]>([]);
   const owner = account?.address ?? "";
   const ta = useMemo(() => (vk && owner ? new TokenAccount(owner, AGUSD_TYPE, pkgCfg, vk) : null), [vk, owner]);
+  const taSag = useMemo(() => (vk && owner ? new TokenAccount(owner, SAGUSD_TYPE, pkgCfg, vk) : null), [vk, owner]);
 
   function push(msg: string, ok: boolean, digest?: string) { setLog((l) => [{ msg, ok, digest }, ...l]); }
   async function exec(label: string, build: (t: Transaction) => void | Promise<void>) {
@@ -78,6 +85,7 @@ export function ConfidentialApp() {
         const pend = (Number(bal.pending?.amount ?? 0) / 1e6).toFixed(2);
         setBalance(amt);
         push(`Compte déjà enregistré · balance déchiffrée : ${amt} cagUSD (pending ${pend})`, true);
+        await refreshSag();
       } catch (e: any) {
         const msg = String(e?.message ?? e);
         if (/does not exist|DoesNotExist|not exist/i.test(msg)) push("Compte pas encore enregistré → clique ②", true);
@@ -144,6 +152,44 @@ export function ConfidentialApp() {
     setBusy("");
   }
 
+  async function stakeConfidential() {
+    if (!taSag) return;
+    setBusy("Stake confidentiel : préparation…");
+    try {
+      // register the confidential sagUSD token in the SAME account (KYC via same whitelist)
+      let sagRegistered = false;
+      try { await client.contra.getBalance(taSag); sagRegistered = true; } catch { /* not yet */ }
+      if (!sagRegistered) {
+        await exec("Compte confidentiel sagUSD enregistré (KYC)", (t) => {
+          t.moveCall({
+            target: `${AGUSD_PKG_V2}::confidential_sagusd::register`,
+            arguments: [t.object(CT_SAGUSD), t.object(WHITELIST), t.object(client.contra.getAccountId(owner)), point(taSag.publicKey.toBytes())],
+          });
+        });
+      }
+      setBusy("Stake confidentiel : USDC → agUSD → sagUSD → csagUSD (chiffré)…");
+      await exec("Stake confidentiel : 100 → csagUSD (yield chiffré)", (t) => {
+        const usdc = t.moveCall({ target: `${AGUSD_PKG}::usdc::faucet`, arguments: [t.object(USDC_TREASURY), t.pure.u64(100_000_000n)] });
+        const ag = t.moveCall({ target: `${AGUSD_PKG}::agusd::mint`, arguments: [t.object(POOL), usdc] });
+        const sag = t.moveCall({ target: `${AGUSD_PKG}::sagusd::stake`, arguments: [t.object(VAULT), ag] });
+        t.add(client.contra.wrap({ coin: sag, receiver: owner, tokenType: SAGUSD_TYPE }));
+      });
+      await exec("Merge csagUSD → balance chiffrée active", async (t) => { t.add(await client.contra.updateBalance({ tokenAccount: taSag, merge: true })); });
+      await refreshSag();
+    } catch (e: any) { push("Stake confidentiel — " + String(e?.message ?? e).slice(0, 130), false); }
+    setBusy("");
+  }
+
+  async function refreshSag() {
+    if (!taSag) return;
+    try {
+      const bal = await client.contra.getBalance(taSag);
+      const amt = (Number(bal.balance.amount) / 1e6).toFixed(2);
+      setSagBalance(amt);
+      push(`Balance csagUSD déchiffrée : ${amt} csagUSD (yield-bearing, chiffré)`, true);
+    } catch { /* not registered yet */ }
+  }
+
   async function refresh() {
     if (!ta) return;
     setBusy("Déchiffrement de ta balance…");
@@ -184,9 +230,10 @@ export function ConfidentialApp() {
           <div style={S.card}>
             <div style={{ display: "flex", justifyContent: "space-between", fontSize: 14 }}><span style={{ color: "#7f978c" }}>toi</span><code style={{ fontSize: 12 }}>{owner.slice(0, 8)}…{owner.slice(-6)}</code></div>
             <div style={{ marginTop: 14, textAlign: "center" }}>
-              <div style={S.lbl}>ta balance confidentielle (déchiffrée par ta viewing key)</div>
+              <div style={S.lbl}>tes balances confidentielles (déchiffrées par ta viewing key)</div>
               <div style={{ fontSize: 34, fontWeight: 700, color: "#ffd479", marginTop: 4 }}>{balance === null ? "—" : `${balance}`} <span style={{ fontSize: 15, color: "#7f978c" }}>cagUSD</span></div>
-              <div style={{ fontSize: 11, color: "#7f978c" }}>on-chain c'est un ciphertext — invisible sans ta clé</div>
+              <div style={{ fontSize: 26, fontWeight: 700, color: "#00c805", marginTop: 2 }}>{sagBalance === null ? "—" : `${sagBalance}`} <span style={{ fontSize: 14, color: "#7f978c" }}>csagUSD <small>(yield, chiffré)</small></span></div>
+              <div style={{ fontSize: 11, color: "#7f978c" }}>on-chain ce sont des ciphertexts — invisibles sans ta clé</div>
             </div>
           </div>
 
@@ -203,6 +250,9 @@ export function ConfidentialApp() {
             </button>
             <button style={{ ...S.btn, background: "#ffd479", color: "#06140d", opacity: registered ? 1 : .4 }} disabled={disabled || !registered} onClick={transferPrivate}>
               ④ Transfert confidentiel : 30 cagUSD → recipient (montant CACHÉ, preuve ZK)
+            </button>
+            <button style={{ ...S.btn, opacity: registered ? 1 : .4 }} disabled={disabled || !registered} onClick={stakeConfidential}>
+              ⑤ Stake confidentiel : agUSD → csagUSD (yield-bearing, CHIFFRÉ)
             </button>
             <button style={{ ...S.btn, ...S.btn2, opacity: registered ? 1 : .4 }} disabled={disabled || !registered} onClick={refresh}>
               ↻ Rafraîchir ma balance déchiffrée
