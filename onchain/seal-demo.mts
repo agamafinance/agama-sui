@@ -17,9 +17,9 @@ import { SuiGrpcClient } from '@mysten/sui/grpc';
 import { Transaction } from '@mysten/sui/transactions';
 import { fromHex, toHex } from '@mysten/sui/utils';
 
-const SEAL_PKG = '0x9cdf639d51a0be9d7e03aefe5aa8f463e9715a17d2fc97745e10b8dd3dc725a8';
-const POLICY = '0x786325d84d2fd6a26fd641fd24d5bde715bea6cd88efca422202061860b9e08c';
-const ADMIN_CAP = '0x947fe6f7b303804b404481aba63cb9a5cad7a4aa1697996d77622eb8dd92623d';
+const SEAL_PKG = '0xde73c6741a37f0576e198994b1f62fda77bbda091f8eb472685aea5aa91eba67';
+const POLICY = '0xc109bcd23f09d5d1395cd774b69f033d5544d295fb7f72f26ab5734822ba1c33';
+const ADMIN_CAP = '0x809c3406acf6ee0eea4bd01666e871e194bb3ba275a90d25df518da4f1cc19ef';
 // Mysten testnet Seal key servers (independent), threshold 2.
 const KEY_SERVERS = [
   '0x73d05d62c18d9374e3ea529e8e0ed6161da1a141a94d3f76ae3fe4e99356db75',

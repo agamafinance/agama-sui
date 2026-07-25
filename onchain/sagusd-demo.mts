@@ -8,11 +8,11 @@ import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 import { Transaction } from '@mysten/sui/transactions';
 import { SuiGrpcClient } from '@mysten/sui/grpc';
 
-const PKG = '0x9c98876d3baceb06ee51ac787f989397d589f25cb2bd25076819c279f686dffc';
-const POOL = '0x593ab3affff12565d50fb8a4432605e623f175e811febdb86fe62e99d6c3ad19';
-const USDC_T = '0x7b2a9f519648b3c5c806dc072920f2bef20070dc25e77d1415ce52c28f52f8ac';
-const VAULT = '0xb75d1f795617fe7634f2124f3dec4def3229c51e41ec659ca64902823024e7a8';
-const YIELD_CAP = '0xd9af80d259e9110192b6ce33a66dcdf26a0e830c604e00ed11f00613a179975d';
+const PKG = '0x4a30152ec1b7f97eddcd92a70bec4858d151732be27d3e4a9e18197702cd388a';
+const POOL = '0xb3ff4a8a6fb24eb818fba18ffd3e0194c10dbd1bc9d8f466fc213a7910d79665';
+const USDC_T = '0xed327ab657d953ae8d6c588b0aa5918c273b840d296c4436265187194d005f90';
+const VAULT = '0x1ff050b03e180879d7ec14c3d6f496dee165f155e85f7c2f240e5e8d2c67bbe8';
+const YIELD_CAP = '0xabb69e3642b2a9a39f37e6da134946447e8f42230ad6b4838f16cddfd96c637c';
 const AGUSD = `${PKG}::agusd::AGUSD`;
 const SAGUSD = `${PKG}::sagusd::SAGUSD`;
 

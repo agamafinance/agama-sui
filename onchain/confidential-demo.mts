@@ -1,5 +1,5 @@
 /**
- * Confidential agUSD — live on Sui testnet.
+ * Confidential agUSD — live on Sui devnet.
  *
  * A fresh LP each run: admin funds + KYC-whitelists it, then the LP registers a
  * confidential token account, mints agUSD, wraps it into the shielded balance,
@@ -19,12 +19,12 @@ import { point } from './src/helpers.js';
 const CONTRA_PKG = '0xfe46e5ce18ba49912585f92de8da2ecdfec0fec918c74b21911628e62b974080';
 const ACCOUNT_REGISTRY = '0x72e8e8a427de42849a3b5e256884972e7e7cf494603c3621a88c6639e83b62c3';
 const TOKEN_REGISTRY = '0xd5c7ff228188100c8d60651e921f644ff6fc85ac3440adbb64a95a2e3ac097fb';
-const AGUSD_PKG = '0x9c98876d3baceb06ee51ac787f989397d589f25cb2bd25076819c279f686dffc';
-const POOL = '0x593ab3affff12565d50fb8a4432605e623f175e811febdb86fe62e99d6c3ad19';
-const USDC_TREASURY = '0x7b2a9f519648b3c5c806dc072920f2bef20070dc25e77d1415ce52c28f52f8ac';
-const CT = '0xd372b544af6ee21d3ce08dd94211f684bde55558dfbeed32decd8407a5c51d44';
-const WHITELIST = '0xfeb070017344698c1afb84b85bb5a4b5c3e455056620a5e478c7f230b1ff39d1';
-const WL_ADMIN_CAP = '0xc392f63bf4eedade8f852760afd8d8af1b2cfb81d070371f010d8caf78d5a02e';
+const AGUSD_PKG = '0x4a30152ec1b7f97eddcd92a70bec4858d151732be27d3e4a9e18197702cd388a';
+const POOL = '0xb3ff4a8a6fb24eb818fba18ffd3e0194c10dbd1bc9d8f466fc213a7910d79665';
+const USDC_TREASURY = '0xed327ab657d953ae8d6c588b0aa5918c273b840d296c4436265187194d005f90';
+const CT = '0xc5185f8ad2ee4a386cf675b7203dfe35ec6e7fd7460dc87019c746dd3d076d78';
+const WHITELIST = '0x30638a4a3cd667cd6c205bf2818ddf7e121424e2574ee90b2ae39124a112632e';
+const WL_ADMIN_CAP = '0x7ae75506d0a8c92d999973c6fbe9ca1a04d95839af67c4fa989fa96f9804918b';
 const AGUSD_TYPE = `${AGUSD_PKG}::agusd::AGUSD`;
 const AMOUNT = 100_000_000n; // 100 agUSD (6dp) — the secret amount
 
