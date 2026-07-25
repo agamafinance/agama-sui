@@ -55,7 +55,7 @@ await exec('4. unstake all sagUSD → agUSD (NAV priced, includes yield)', (t) =
 });
 const out = sum(await coins(AGUSD)) - before;
 console.log('\n=== RESULT ===');
-console.log('  staked   : 100.00 agUSD  → 100.00 sagUSD  (NAV 1.0000)');
-console.log('  yield    : +20.00 agUSD booked           → NAV 1.2000');
+console.log('  staked   : 100.00 agUSD into the vault');
+console.log('  yield    : +20.00 agUSD booked (no new shares → NAV per share rises)');
 console.log('  unstaked : 100.00 sagUSD →', (Number(out) / 1e6).toFixed(2), 'agUSD  (NAV priced, NOT 1:1)');
 console.log('\n✓ sagUSD is yield-bearing: 100 agUSD in,', (Number(out) / 1e6).toFixed(2), 'agUSD out. Live on testnet.');
