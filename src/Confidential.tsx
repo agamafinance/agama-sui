@@ -16,6 +16,7 @@ import { TokenAccount } from "./contra/token_account";
 import { GROUP_ORDER } from "./contra/ristretto255";
 import { point } from "./contra/helpers";
 import wasmUrl from "./contra/bulletproofs-wasm/web/contra_bulletproofs_wasm_bg.wasm?url";
+import { AGAMA_VAULTS, allocateUsd, aprLabel, capacityLabel, blendedApyBps, type Curator } from "./vaults";
 
 // New testnet deployment (audit-hardened, confidential-enabled).
 const CONTRA_PKG = "0xfe46e5ce18ba49912585f92de8da2ecdfec0fec918c74b21911628e62b974080";
@@ -142,6 +143,59 @@ function SpherePanel() {
   );
 }
 
+// Where the swapped USDC goes: the Allocation Engine routes it across the six
+// curated private-credit vaults (Tenka & Qiro) per their target allocation.
+function VaultAllocationPanel({ invested }: { invested: number }) {
+  const fmt = (n: number) => n.toLocaleString("en-US", { maximumFractionDigits: 2 });
+  const rows = allocateUsd(invested);
+  const curColor = (c: Curator) => (c === "Tenka" ? "#ffd479" : "#6fb7ff");
+  const blended = (blendedApyBps() / 100).toFixed(1);
+  const card: React.CSSProperties = { background: "#111c18", border: "1px solid rgba(255,255,255,.08)", borderRadius: 14, padding: 18, marginTop: 14, borderLeft: "3px solid #00c805" };
+  const lbl: React.CSSProperties = { fontSize: 11, textTransform: "uppercase", letterSpacing: .5, color: "#7f978c" };
+  return (
+    <div style={{ maxWidth: 520, margin: "14px auto 0", padding: "0 24px" }}>
+      <div style={card}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+          <div style={{ fontSize: 15, fontWeight: 700 }}>🏦 Où vont tes USDC — panier private-credit</div>
+          <div style={{ fontSize: 12, color: "#00c805", fontWeight: 700 }}>~{blended}% APY mélangé</div>
+        </div>
+        <p style={{ color: "#7f978c", fontSize: 12, margin: "6px 0 12px" }}>
+          Quand tu swap <b>USDC → agUSD</b>, l'Allocation Engine route tes USDC dans ces <b>6 vaults</b> (Tenka &amp; Qiro) selon leur allocation cible. agUSD = une créance sur ce panier diversifié.
+        </p>
+        <div style={{ ...lbl, marginBottom: 6 }}>
+          {invested > 0 ? `tes ${fmt(invested)} USDC investis dans le panier` : "allocation cible — fais ③ pour investir 100 USDC"}
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+          {rows.map(({ spec, amountUsd }) => (
+            <div key={spec.id} style={{ background: "#0e1714", border: "1px solid rgba(255,255,255,.08)", borderRadius: 10, padding: "10px 12px", borderTop: `2px solid ${curColor(spec.curator)}` }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span style={{ fontSize: 10.5, fontWeight: 700, color: curColor(spec.curator) }}>{spec.curator}</span>
+                <span style={{ fontSize: 10, color: "#7f978c" }}>{spec.tranche}</span>
+              </div>
+              <div style={{ fontSize: 13, fontWeight: 700, marginTop: 3 }}>{spec.name}</div>
+              <div style={{ fontSize: 11, color: "#7f978c" }}>{spec.strategy}</div>
+              <div style={{ display: "flex", justifyContent: "space-between", marginTop: 6, fontSize: 11.5 }}>
+                <span style={{ color: "#00c805", fontWeight: 700 }}>{aprLabel(spec)} APY</span>
+                <span style={{ color: "#e8f0ea" }}>{spec.allocBps / 100}% alloc</span>
+              </div>
+              {invested > 0 && (
+                <div style={{ marginTop: 6, fontSize: 14, fontWeight: 700, color: curColor(spec.curator) }}>
+                  → {fmt(amountUsd)} USDC
+                </div>
+              )}
+              <div style={{ marginTop: 6, fontSize: 10.5, color: "#6b7d74", display: "flex", flexWrap: "wrap", gap: "2px 8px" }}>
+                <span>↻ {spec.redemption}</span>
+                <span>🔒 {spec.lockup}</span>
+                <span>cap {capacityLabel(spec)}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function ConfidentialApp() {
   const account = useCurrentAccount();
   const suiClient = useSuiClient();
@@ -156,11 +210,25 @@ export function ConfidentialApp() {
   const [dealDoc, setDealDoc] = useState("Senior Private Credit · Maple → ACME Corp · $100k · 9% APR · LTV 65%");
   const [sealBlobId, setSealBlobId] = useState<string | null>(null);
   const [sealDecrypted, setSealDecrypted] = useState<string | null>(null);
+  const [invested, setInvested] = useState(0); // total USDC routed into the vault basket
   const [busy, setBusy] = useState("");
   const [log, setLog] = useState<Log[]>([]);
   const owner = account?.address ?? "";
   const ta = useMemo(() => (vk && owner ? new TokenAccount(owner, AGUSD_TYPE, pkgCfg, vk) : null), [vk, owner]);
   const taSag = useMemo(() => (vk && owner ? new TokenAccount(owner, SAGUSD_TYPE, pkgCfg, vk) : null), [vk, owner]);
+
+  // How much USDC this wallet has routed into the vault basket (persisted per owner).
+  useEffect(() => {
+    if (!owner) return setInvested(0);
+    setInvested(Number(localStorage.getItem(`agama-invested-${owner}`) ?? 0));
+  }, [owner]);
+  function addInvested(usd: number) {
+    setInvested((prev) => {
+      const next = prev + usd;
+      if (owner) localStorage.setItem(`agama-invested-${owner}`, String(next));
+      return next;
+    });
+  }
 
   function push(msg: string, ok: boolean, digest?: string) { setLog((l) => [{ msg, ok, digest }, ...l]); }
   async function exec(label: string, build: (t: Transaction) => void | Promise<void>) {
@@ -269,6 +337,8 @@ export function ConfidentialApp() {
       setBusy("Propagation du wrap (finalité)…");
       await new Promise((r) => setTimeout(r, 4000));
       await mergeWithRetry(ta, "Merge → balance chiffrée active");
+      addInvested(100); // route the 100 USDC into the vault basket
+      push("Allocation Engine : 100 USDC routés dans les 6 vaults (Tenka & Qiro)", true);
       await refresh();
     } catch (e: any) { push("Dépôt — " + String(e?.message ?? e).slice(0, 90), false); }
     setBusy("");
@@ -436,6 +506,8 @@ export function ConfidentialApp() {
               ↻ Rafraîchir ma balance déchiffrée
             </button>
           </div>
+
+          <VaultAllocationPanel invested={invested} />
 
           <div style={S.card}>
             <div style={S.lbl}>⑥ Seal — deal doc privé (chiffré + Walrus)</div>
