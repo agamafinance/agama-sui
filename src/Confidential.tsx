@@ -109,8 +109,13 @@ export function ConfidentialApp() {
     setBusy("Déchiffrement de ta balance…");
     try {
       const bal = await client.contra.getBalance(ta);
-      setBalance((Number(bal.balance.amount) / 1e6).toFixed(2));
-    } catch { setBalance("0.00"); }
+      const active = Number(bal.balance.amount) / 1e6;
+      const pending = Number(bal.pending?.amount ?? 0) / 1e6;
+      setBalance(active.toFixed(2));
+      push(`Balance déchiffrée : active ${active.toFixed(2)} · pending ${pending.toFixed(2)} cagUSD`, true);
+    } catch (e: any) {
+      push("Déchiffrement — " + String(e?.message ?? e).slice(0, 110), false);
+    }
     setBusy("");
   }
 
