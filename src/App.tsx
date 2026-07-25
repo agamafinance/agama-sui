@@ -7,6 +7,9 @@ const BACKING_PROOF_ID = "0xd9f6edacb75cd17bc3ebf1220c806dfb5d6f4e9067cd509c2126
 const CONF_TOKEN = "0xd372b544af6ee21d3ce08dd94211f684bde55558dfbeed32decd8407a5c51d44";
 const STAKING_VAULT = "0xb75d1f795617fe7634f2124f3dec4def3229c51e41ec659ca64902823024e7a8";
 const SEAL_POLICY = "0x786325d84d2fd6a26fd641fd24d5bde715bea6cd88efca422202061860b9e08c";
+const ATTEST_REGISTRY = "0x5cb3edcb0ece85c464216dbe3b492ce56b3a73fa5da2b854b5865192e83505e1";
+const WALRUS_BLOB = "4HHYVqu0_PsHe8cCXL5Lgrc5QugkRTxNiX_57alaHEI";
+const WALRUS_AGGREGATOR = "https://aggregator.walrus-testnet.walrus.space/v1/blobs/";
 
 async function rpcObject(id: string): Promise<any> {
   const res = await fetch(TESTNET_RPC, {
@@ -40,17 +43,36 @@ async function fetchSeal(): Promise<Seal> {
   return { allow: Array.isArray(contents) ? contents.length : 0 };
 }
 
+type Attest = { navCents: number; updates: number; keyed: boolean } | null;
+async function fetchAttest(): Promise<Attest> {
+  const f = await rpcObject(ATTEST_REGISTRY);
+  if (!f) return null;
+  const pk = f.enclave_pubkey ?? [];
+  return { navCents: Number(f.latest_nav_cents ?? 0), updates: Number(f.updates ?? 0), keyed: Array.isArray(pk) ? pk.length > 0 : false };
+}
+
+type Walrus = { bytes: number } | null;
+async function fetchWalrus(): Promise<Walrus> {
+  try {
+    const r = await fetch(WALRUS_AGGREGATOR + WALRUS_BLOB);
+    if (!r.ok) return null;
+    return { bytes: (await r.arrayBuffer()).byteLength };
+  } catch { return null; }
+}
+
 function OnChainPanel() {
   const [data, setData] = useState<OnChain>(null);
   const [vault, setVault] = useState<Vault>(null);
   const [seal, setSeal] = useState<Seal>(null);
+  const [attest, setAttest] = useState<Attest>(null);
+  const [walrus, setWalrus] = useState<Walrus>(null);
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   async function load() {
     setLoading(true); setErr(null);
     try {
-      const [bp, v, s] = await Promise.all([fetchBackingProof(), fetchVault(), fetchSeal()]);
-      setData(bp); setVault(v); setSeal(s);
+      const [bp, v, s, a, w] = await Promise.all([fetchBackingProof(), fetchVault(), fetchSeal(), fetchAttest(), fetchWalrus()]);
+      setData(bp); setVault(v); setSeal(s); setAttest(a); setWalrus(w);
     } catch (e) { setErr(String(e)); }
     setLoading(false);
   }
@@ -106,6 +128,32 @@ function OnChainPanel() {
           <div className="oc-line">decrypt <b>owner OR allowlist{seal ? ` (${seal.allow})` : ""}</b></div>
           <div className="oc-line muted">rival → denied by the MPC committee (seal_approve)</div>
           <a className="oc-link" href={`https://suiscan.xyz/testnet/object/${SEAL_POLICY}`} target="_blank" rel="noreferrer">view policy ↗</a>
+        </div>
+        <div className="oc-card">
+          <span className="oc-tag conf">testnet · Walrus deal docs</span>
+          <div className="oc-line">deal doc on Walrus <b>{walrus ? `${walrus.bytes} B` : loading ? "…" : "—"}</b></div>
+          <div className="oc-line">bytes <b>public</b> · content <b>Seal-gated</b></div>
+          <div className="oc-line muted">decentralized storage; only owner/allowlist can read</div>
+          <a className="oc-link" href={`${WALRUS_AGGREGATOR}${WALRUS_BLOB}`} target="_blank" rel="noreferrer">fetch blob ↗</a>
+        </div>
+        <div className="oc-card">
+          <span className="oc-tag conf">testnet · Nautilus attested NAV</span>
+          {attest ? (
+            <>
+              <div className="oc-cov">{fmt(attest.navCents)} <small>attested</small></div>
+              <div className="oc-line">enclave key <b className={attest.keyed ? "g" : "b"}>{attest.keyed ? "✓ registered" : "—"}</b></div>
+              <div className="oc-line">attestations <b>{attest.updates}</b></div>
+              <div className="oc-line muted">forged signature → rejected on-chain (TEE-attested)</div>
+            </>
+          ) : <div className="empty">{loading ? "reading Sui…" : "no data"}</div>}
+          <a className="oc-link" href={`https://suiscan.xyz/testnet/object/${ATTEST_REGISTRY}`} target="_blank" rel="noreferrer">view object ↗</a>
+        </div>
+        <div className="oc-card">
+          <span className="oc-tag conf">testnet · zkLogin onboarding</span>
+          <div className="oc-line">LP onboarding <b>no seed phrase</b></div>
+          <div className="oc-line">login <b>Google → derived address</b></div>
+          <div className="oc-line muted">ephemeral key + ZK proof; salt-derived Sui address</div>
+          <a className="oc-link" href="https://docs.sui.io/concepts/cryptography/zklogin" target="_blank" rel="noreferrer">zkLogin docs ↗</a>
         </div>
       </div>
     </section>
