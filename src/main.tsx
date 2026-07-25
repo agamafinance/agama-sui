@@ -9,14 +9,26 @@ import "./styles.css";
 
 const queryClient = new QueryClient();
 const networks = { testnet: { url: "https://sui-testnet-rpc.publicnode.com" } };
-const isTest = typeof window !== "undefined" && window.location.hash.replace(/^#\/?/, "") === "test";
+// Default landing is the interactive LP flow (wallet connect). The full
+// info dashboard lives at #dashboard.
+const isDashboard = typeof window !== "undefined" && window.location.hash.replace(/^#\/?/, "") === "dashboard";
+
+function Root() {
+  const [dash, setDash] = React.useState(isDashboard);
+  React.useEffect(() => {
+    const onHash = () => setDash(window.location.hash.replace(/^#\/?/, "") === "dashboard");
+    window.addEventListener("hashchange", onHash);
+    return () => window.removeEventListener("hashchange", onHash);
+  }, []);
+  return dash ? <App /> : <TestApp />;
+}
 
 createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
       <SuiClientProvider networks={networks} defaultNetwork="testnet">
         <WalletProvider autoConnect>
-          {isTest ? <TestApp /> : <App />}
+          <Root />
         </WalletProvider>
       </SuiClientProvider>
     </QueryClientProvider>
