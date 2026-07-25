@@ -280,7 +280,14 @@ export function App() {
   const twin = sphere.publicTwin();
   const positions = sphere.visiblePositions(viewer);
   const vaults = sphere.visibleVaults(viewer);
-  const audit = sphere.auditLog();
+  // The audit log respects the same boundary as everything else: outsiders see
+  // only on-chain (public) events; an LP sees public + their own; Agama sees all.
+  const audit = sphere.auditLog().filter((e) =>
+    e.zone === "public" ? true
+    : viewer === PUBLIC ? false
+    : AGAMA.includes(viewer) ? true
+    : e.actor === viewer,
+  );
   const isPublic = viewer === PUBLIC;
 
   const totalPrivate = useMemo(
