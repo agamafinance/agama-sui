@@ -3,5 +3,15 @@ name = "agusd"
 edition = "2024"
 
 [dependencies]
-contra = { local = "../../../move" }
+# Sui's Confidential Transfers framework (Twisted ElGamal + ZK), the module that
+# hides balances/amounts on-chain. Public repo, pinned for reproducibility:
+#   https://github.com/MystenLabs/confidential-transfers  (module `contra`)
+# NOTE: upstream has migrated to Sui's new package-manager format ([environments]);
+# rebuilding this package from source therefore requires a toolchain aligned with
+# that repo. The package is deployed and verified on Sui testnet (see DEPLOYMENT.md);
+# the two standalone packages (../agama-attest, ../agama-seal) build + `sui move test`
+# out of the box with no external dependency.
+contra = { git = "https://github.com/MystenLabs/confidential-transfers.git", subdir = "move", rev = "257f9a05d2fcd9468c243cc70fa01cd4a06f1bd0" }
 
+[addresses]
+agusd = "0x0"

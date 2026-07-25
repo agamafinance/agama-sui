@@ -50,6 +50,18 @@ npm run anon     # → 21 passed, 0 failed      (anonymity: different books, one
 npm run build    # → type-checks + production bundle
 ```
 
+**Move contracts.** The two standalone packages build and unit-test from a fresh clone:
+
+```bash
+cd onchain/agama-attest && sui move test   # Nautilus: valid / forged / replay / non-admin  (4 passed)
+cd onchain/agama-seal   && sui move test   # Seal seal_approve: owner / allowlist / stranger / bad-id (4 passed)
+```
+
+The confidential `agusd` package depends on Mysten's [confidential-transfers](https://github.com/MystenLabs/confidential-transfers)
+framework (`contra`); it is deployed and verified on testnet (see [`onchain/DEPLOYMENT.md`](onchain/DEPLOYMENT.md)),
+and rebuilding it from source requires a toolchain aligned with that repo's package-manager format.
+The `onchain/*.mts` flow scripts are run from inside a confidential-transfers SDK checkout (they import its TS SDK).
+
 **Privacy is the point.** For the honest threat model — what is anonymous, what is only
 confidential, and against whom — see **[`ANONYMITY.md`](ANONYMITY.md)**. Short version:
 the **Sphere** hides *who* (identities & the graph never touch the public chain), while
