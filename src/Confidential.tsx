@@ -14,6 +14,7 @@ import { DiscreteLogTable } from "./contra/twisted_elgamal";
 import { TokenAccount } from "./contra/token_account";
 import { GROUP_ORDER } from "./contra/ristretto255";
 import { point } from "./contra/helpers";
+import wasmUrl from "./contra/bulletproofs-wasm/web/contra_bulletproofs_wasm_bg.wasm?url";
 
 // New testnet deployment (audit-hardened, confidential-enabled).
 const CONTRA_PKG = "0xfe46e5ce18ba49912585f92de8da2ecdfec0fec918c74b21911628e62b974080";
@@ -26,6 +27,8 @@ const CT = "0x7cb730a0ee23a1d014b481930c893134a3942d39c623d9a4dd01022e70975bf2";
 const WHITELIST = "0x6b2b8a3e2b85d5e5b7fb6ce557e31e1adf4d9e1c3b1d7b301c125cd3466cd9ae";
 const AGUSD_TYPE = `${AGUSD_PKG}::agusd::AGUSD`;
 const pkgCfg = { packageId: CONTRA_PKG, accountRegistryId: ACCOUNT_REGISTRY, tokenRegistryId: TOKEN_REGISTRY };
+// A registered confidential account to receive a confidential transfer (demo).
+const DEMO_RECIPIENT = "0x891a3f96356a7834b77f4c2380d8d05816bb9002b5f82e2032c9ec5713c143f4";
 
 type Log = { msg: string; digest?: string; ok: boolean };
 
@@ -35,7 +38,7 @@ export function ConfidentialApp() {
   const { mutateAsync: signMsg } = useSignPersonalMessage();
   const { mutateAsync: signExec } = useSignAndExecuteTransaction();
 
-  const client = useMemo(() => suiClient.$extend(contra({ packageConfig: pkgCfg, table: DiscreteLogTable.create(16) })), [suiClient]);
+  const client = useMemo(() => suiClient.$extend(contra({ packageConfig: pkgCfg, table: DiscreteLogTable.create(16), wasmUrl })), [suiClient]);
   const [vk, setVk] = useState<bigint | null>(null); // viewing key scalar
   const [registered, setRegistered] = useState(false);
   const [balance, setBalance] = useState<string | null>(null);
@@ -120,6 +123,19 @@ export function ConfidentialApp() {
     setBusy("");
   }
 
+  async function transferPrivate() {
+    if (!ta) return;
+    setBusy("Transfert confidentiel : génération de la preuve ZK dans le navigateur (wasm)…");
+    try {
+      await exec("Transfert confidentiel : 30 cagUSD → recipient (montant CACHÉ)", async (t) => {
+        const transferFn = await client.contra.transfer({ tokenAccount: ta, receiverAddress: DEMO_RECIPIENT, amount: 30_000_000n });
+        t.add(transferFn);
+      });
+      await refresh();
+    } catch (e: any) { push("Transfert — " + String(e?.message ?? e).slice(0, 130), false); }
+    setBusy("");
+  }
+
   async function refresh() {
     if (!ta) return;
     setBusy("Déchiffrement de ta balance…");
@@ -176,6 +192,9 @@ export function ConfidentialApp() {
             </button>
             <button style={{ ...S.btn, opacity: registered ? 1 : .4 }} disabled={disabled || !registered} onClick={depositPrivate}>
               ③ Dépôt privé : USDC → cagUSD (montant caché)
+            </button>
+            <button style={{ ...S.btn, background: "#ffd479", color: "#06140d", opacity: registered ? 1 : .4 }} disabled={disabled || !registered} onClick={transferPrivate}>
+              ④ Transfert confidentiel : 30 cagUSD → recipient (montant CACHÉ, preuve ZK)
             </button>
             <button style={{ ...S.btn, ...S.btn2, opacity: registered ? 1 : .4 }} disabled={disabled || !registered} onClick={refresh}>
               ↻ Rafraîchir ma balance déchiffrée
