@@ -6,6 +6,7 @@ const TESTNET_RPC = "https://sui-testnet-rpc.publicnode.com";
 const BACKING_PROOF_ID = "0xd9f6edacb75cd17bc3ebf1220c806dfb5d6f4e9067cd509c21260ceeb7a8fe72";
 const CONF_TOKEN = "0xd372b544af6ee21d3ce08dd94211f684bde55558dfbeed32decd8407a5c51d44";
 const STAKING_VAULT = "0xb75d1f795617fe7634f2124f3dec4def3229c51e41ec659ca64902823024e7a8";
+const SEAL_POLICY = "0x786325d84d2fd6a26fd641fd24d5bde715bea6cd88efca422202061860b9e08c";
 
 async function rpcObject(id: string): Promise<any> {
   const res = await fetch(TESTNET_RPC, {
@@ -31,16 +32,25 @@ async function fetchVault(): Promise<Vault> {
   return { navBps: shares === 0 ? 10000 : Math.round((assets * 10000) / shares), assets, shares };
 }
 
+type Seal = { allow: number } | null;
+async function fetchSeal(): Promise<Seal> {
+  const f = await rpcObject(SEAL_POLICY);
+  if (!f) return null;
+  const contents = f.allow?.fields?.contents ?? [];
+  return { allow: Array.isArray(contents) ? contents.length : 0 };
+}
+
 function OnChainPanel() {
   const [data, setData] = useState<OnChain>(null);
   const [vault, setVault] = useState<Vault>(null);
+  const [seal, setSeal] = useState<Seal>(null);
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   async function load() {
     setLoading(true); setErr(null);
     try {
-      const [bp, v] = await Promise.all([fetchBackingProof(), fetchVault()]);
-      setData(bp); setVault(v);
+      const [bp, v, s] = await Promise.all([fetchBackingProof(), fetchVault(), fetchSeal()]);
+      setData(bp); setVault(v); setSeal(s);
     } catch (e) { setErr(String(e)); }
     setLoading(false);
   }
@@ -54,7 +64,7 @@ function OnChainPanel() {
       </div>
       <p className="scope">
         The public twin isn't only in this page — it's posted to a real <code>BackingProof</code> on Sui testnet by{" "}
-        <code>onchain/seam.ts</code>. Confidential agUSD (amounts hidden, ZK) lives on the same testnet package. All read-only here.
+        <code>onchain/seam.ts</code>. Confidential agUSD (ZK amounts) and Seal (real access control) live on the same testnet. All read-only here.
       </p>
       {err && <div className="empty">RPC error: {err}</div>}
       <div className="onchain-grid">
@@ -89,6 +99,13 @@ function OnChainPanel() {
           <div className="oc-line">register <b>KYC-gated</b> · issuer freeze controls</div>
           <div className="oc-line muted">the amount-hiding layer — proven at protocol level</div>
           <a className="oc-link" href={`https://suiscan.xyz/testnet/object/${CONF_TOKEN}`} target="_blank" rel="noreferrer">view object ↗</a>
+        </div>
+        <div className="oc-card">
+          <span className="oc-tag conf">testnet · Seal access control</span>
+          <div className="oc-line">position data <b>Seal-encrypted</b> (threshold MPC)</div>
+          <div className="oc-line">decrypt <b>owner OR allowlist{seal ? ` (${seal.allow})` : ""}</b></div>
+          <div className="oc-line muted">rival → denied by the MPC committee (seal_approve)</div>
+          <a className="oc-link" href={`https://suiscan.xyz/testnet/object/${SEAL_POLICY}`} target="_blank" rel="noreferrer">view policy ↗</a>
         </div>
       </div>
     </section>

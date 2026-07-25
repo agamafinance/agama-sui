@@ -60,3 +60,25 @@ native).
 | **agUSD** | synthetic dollar, 1:1 | USDC reserve; confidential variant hides amounts |
 | **sagUSD** | yield-bearing share | staked agUSD + accrued vault yield (NAV-priced) |
 | **confidential agUSD** | amount-hidden agUSD | same, ElGamal-encrypted balances |
+
+## Seal — real role-based access control (testnet)
+
+The Sphere's "who can see what" is no longer only simulated: private position /
+deal data is encrypted with **Seal** (threshold MPC + on-chain policy), and the
+Seal key-server committee only releases the decryption key after dry-running
+`agama_seal::access::seal_approve` on testnet.
+
+| What | Object ID |
+|---|---|
+| **agama_seal package** | `0x9cdf639d51a0be9d7e03aefe5aa8f463e9715a17d2fc97745e10b8dd3dc725a8` |
+| **`AccessPolicy`** (Agama allowlist) | `0x786325d84d2fd6a26fd641fd24d5bde715bea6cd88efca422202061860b9e08c` |
+| `AccessAdminCap` (compliance) | `0x947fe6f7b303804b404481aba63cb9a5cad7a4aa1697996d77622eb8dd92623d` |
+| Seal key servers (Mysten testnet, threshold 2) | `0x73d05d62…356db75`, `0xf5d14a81…591623c8` |
+
+Verified (`onchain/seal-demo.mts`): a position encrypted for Alice —
+- **Alice (owner)** → ✓ decrypts
+- **Agama risk team** (on the allowlist) → ✓ decrypts
+- **Rival LP** → ✗ **DENIED by the Seal committee** (`NoAccessError`)
+
+This runs on the **same network** (testnet) as Confidential Transfers — a single
+coherent deployment (Mysten's own reference splits Seal/Contra across networks).

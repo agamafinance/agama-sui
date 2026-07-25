@@ -29,6 +29,7 @@ list + verification in [`onchain/DEPLOYMENT.md`](onchain/DEPLOYMENT.md).
 - **Confidential flow, verified** (`onchain/confidential-demo.mts`): fresh
   KYC-whitelisted LP → register → wrap → merge → decrypt = **100.00 agUSD**. The
   amount lives on-chain as ElGamal ciphertexts, recovered only with the viewing key.
+- **Seal access control, verified** (`onchain/seal-demo.mts`): an LP position is Seal-encrypted; **owner** and **Agama allowlist** decrypt, a **rival is denied by the MPC committee** (`seal_approve` on-chain). Real role-based access — same testnet as Confidential Transfers.
 - **sagUSD yield, verified** (`onchain/sagusd-demo.mts`): stake 100 agUSD → accrue
   yield → unstake **120 agUSD** (NAV 1.0 → 1.2).
 - **The amount-hiding crypto runs locally** (`onchain/wasm/`): prebuilt bulletproofs
@@ -76,13 +77,18 @@ this repo uses the right tool for each:
 
 | Need | Tool | Status |
 |---|---|---|
-| Hide **amounts / balances** of the token on-chain | **Confidential Transfers** (Twisted ElGamal + ZK) | ✅ live, testnet (`onchain/agusd-move`) |
-| Hide **who / positions / deal-data / allocation** across parties | **Sphere** (permissioned env + ACL) + Seal + Nautilus | 🟡 simulated (no public SDK yet) |
-| Publicly **prove solvency** without revealing positions | Regulated Coin + on-chain `BackingProof` | ✅ live, testnet (`onchain/agusd-move`) |
+| Hide **amounts / balances** of the token on-chain | **Confidential Transfers** (Twisted ElGamal + ZK) | ✅ real, testnet (`onchain/agusd-move`) |
+| Control **who can read** private positions / deal-data | **Seal** (threshold MPC + on-chain `seal_approve`) | ✅ real, testnet (`onchain/seal-demo.mts`) |
+| The full **multi-party permissioned environment** | **Sui Spheres** | 🟡 simulated (no public SDK yet) |
+| Publicly **prove solvency** without revealing positions | Regulated Coin + on-chain `BackingProof` | ✅ real, testnet (`onchain/agusd-move`) |
 
-A Sphere hides the multi-party underwriting workflow; Confidential Transfers
-hides the dollar's amounts. Together: the vault is private, the dollar is
-private, and solvency is publicly provable.
+Two of the three privacy needs are met by **real Sui primitives on testnet** —
+Confidential Transfers (amounts) and Seal (access control). Only the full Spheres
+*environment* is simulated, because it has no public SDK yet. This mirrors Mysten's
+own most-advanced reference (Helm), which also uses real Confidential Transfers +
+Seal and simulates the orchestration — except we run **both on one network**.
+Together: the vault is private, the dollar is private, and solvency is publicly
+provable.
 
 ## Credits & license
 
