@@ -13,8 +13,8 @@ import { SuiGrpcClient } from '@mysten/sui/grpc';
 import { Transaction } from '@mysten/sui/transactions';
 import { bcs } from '@mysten/sui/bcs';
 
-const PKG = '0x476d7719489d21ecdb931abe4f9b3d1cdf680a0e79e35b572969a533f6c63e7a';
-const REGISTRY = '0x7f6e8a0dd75f36c6a43647913d4c8f1532c5ce36a2f5972bf571db0d804c64f7';
+const PKG = '0x180625afa71d367804197147af32a3e2ca27d032fd0bea80aad5d684f0f2a795';
+const REGISTRY = '0xa5057a9a3439b70ba026632561c7dd07efe92389f7d927d4378cb6189234bbad';
 
 const admin = Ed25519Keypair.fromSecretKey(process.env.AGAMA_KEY!);
 const ME = admin.toSuiAddress();

@@ -3,12 +3,12 @@ import { AgamaSphere, PUBLIC, AGAMA, fmt, type Principal } from "./sphere.ts";
 
 // --- live on-chain deployments (read-only via public RPC; no wallet needed) ---
 const TESTNET_RPC = "https://sui-testnet-rpc.publicnode.com";
-const BACKING_PROOF_ID = "0x842891aa47a4ef08cd370c3fcd186eef4084bfa55c74f02ef9ea0a6d9173ff23";
-const POOL = "0xb3ff4a8a6fb24eb818fba18ffd3e0194c10dbd1bc9d8f466fc213a7910d79665";
-const CONF_TOKEN = "0xc5185f8ad2ee4a386cf675b7203dfe35ec6e7fd7460dc87019c746dd3d076d78";
-const STAKING_VAULT = "0x1ff050b03e180879d7ec14c3d6f496dee165f155e85f7c2f240e5e8d2c67bbe8";
-const SEAL_POLICY = "0xc109bcd23f09d5d1395cd774b69f033d5544d295fb7f72f26ab5734822ba1c33";
-const ATTEST_REGISTRY = "0x7f6e8a0dd75f36c6a43647913d4c8f1532c5ce36a2f5972bf571db0d804c64f7";
+const BACKING_PROOF_ID = "0x0af97dc270fbfbb6f9083b49c5ee63cded60e18e397affb1919858f3a015ca73";
+const POOL = "0xd9878b98e855181479f439254c47599296b7a2f97c8694e751e62b87ca5d6f67";
+const CONF_TOKEN = "0x7cb730a0ee23a1d014b481930c893134a3942d39c623d9a4dd01022e70975bf2";
+const STAKING_VAULT = "0x29b9146405de04894f1a9e932ed7544965dd934e1460fb63bc524fb699344bc8";
+const SEAL_POLICY = "0x6983f5ea3f67811beb06ef956a1c457b5fdd979992a753313080c8e8df1792f1";
+const ATTEST_REGISTRY = "0xa5057a9a3439b70ba026632561c7dd07efe92389f7d927d4378cb6189234bbad";
 const WALRUS_BLOB = "Wo6IMua_VAb3iA3fcrh75_LZXME_zyJY39DimWiQKZo";
 const WALRUS_AGGREGATOR = "https://aggregator.walrus-testnet.walrus.space/v1/blobs/";
 

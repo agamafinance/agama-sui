@@ -15,32 +15,33 @@ Deployed by `0x891a3f96356a7834b77f4c2380d8d05816bb9002b5f82e2032c9ec5713c143f4`
 | Confidential Transfers framework (contra) | `0xfe46e5ce18ba49912585f92de8da2ecdfec0fec918c74b21911628e62b974080` |
 | contra TokenRegistry | `0xd5c7ff228188100c8d60651e921f644ff6fc85ac3440adbb64a95a2e3ac097fb` |
 | contra AccountRegistry | `0x72e8e8a427de42849a3b5e256884972e7e7cf494603c3621a88c6639e83b62c3` |
-| **agUSD package** (usdc + agusd + sagusd + confidential) | `0x4a30152ec1b7f97eddcd92a70bec4858d151732be27d3e4a9e18197702cd388a` |
-| agUSD Pool (USDC reserve, 1:1) | `0xb3ff4a8a6fb24eb818fba18ffd3e0194c10dbd1bc9d8f466fc213a7910d79665` |
-| test UsdcTreasury (faucet) | `0xed327ab657d953ae8d6c588b0aa5918c273b840d296c4436265187194d005f90` |
-| AgusdAdminCap | `0x9cc7133b57f8d8951f17735114072eed6f80a874e77582c08f3baea12f2d2c3a` |
-| **BackingProof** (the Sphere seam) | `0x842891aa47a4ef08cd370c3fcd186eef4084bfa55c74f02ef9ea0a6d9173ff23` |
-| **StakingVault** (sagUSD) | `0x1ff050b03e180879d7ec14c3d6f496dee165f155e85f7c2f240e5e8d2c67bbe8` |
-| YieldCap | `0xabb69e3642b2a9a39f37e6da134946447e8f42230ad6b4838f16cddfd96c637c` |
-| **ConfidentialToken<AGUSD>** | `0xc5185f8ad2ee4a386cf675b7203dfe35ec6e7fd7460dc87019c746dd3d076d78` |
-| KYC Whitelist | `0x30638a4a3cd667cd6c205bf2818ddf7e121424e2574ee90b2ae39124a112632e` |
-| WhitelistAdminCap | `0x7ae75506d0a8c92d999973c6fbe9ca1a04d95839af67c4fa989fa96f9804918b` |
+| **agUSD package** (usdc + agusd + sagusd + confidential) | `0x9e41853e589ce1bc8f7ecac37b139f42f7cd229a2baee29bc392bd989f6f16ab` |
+| agUSD Pool (USDC reserve, 1:1) | `0xd9878b98e855181479f439254c47599296b7a2f97c8694e751e62b87ca5d6f67` |
+| test UsdcTreasury (faucet) | `0x8273756767150666fd12111b11458d063cfa25cec811209e41a427fe925b7d8d` |
+| AgusdAdminCap | `0x23acc1554383c35f92d864e0cf012f9cf184072b6aedd8aed3bc67034f3e2c05` |
+| **BackingProof** (the Sphere seam) | `0x0af97dc270fbfbb6f9083b49c5ee63cded60e18e397affb1919858f3a015ca73` |
+| **StakingVault** (sagUSD) | `0x29b9146405de04894f1a9e932ed7544965dd934e1460fb63bc524fb699344bc8` |
+| YieldCap | `0xfa9cf1deae18e06d1cf2ffcef24a51392dd30e5b9770ee6245bee241ff2303fa` |
+| **ConfidentialToken<AGUSD>** | `0x7cb730a0ee23a1d014b481930c893134a3942d39c623d9a4dd01022e70975bf2` |
+| KYC Whitelist | `0x6b2b8a3e2b85d5e5b7fb6ce557e31e1adf4d9e1c3b1d7b301c125cd3466cd9ae` |
+| WhitelistAdminCap | `0x8d1d9d823c04117cc7d46516fb6d85c58eaf114aeac69eaa1111364e6b81d20a` |
+| ManagementCap<AGUSD> (issuer freeze/seize) | `0xfc3a7366e4821915176c27dbcbff391ff52a167c9cfc81770fe6fca6cc589b1c` |
 
 ## Seal — access control
 
 | What | Object ID |
 |---|---|
-| **agama_seal package** | `0xde73c6741a37f0576e198994b1f62fda77bbda091f8eb472685aea5aa91eba67` |
-| **AccessPolicy** (allowlist) | `0xc109bcd23f09d5d1395cd774b69f033d5544d295fb7f72f26ab5734822ba1c33` |
-| AccessAdminCap | `0x809c3406acf6ee0eea4bd01666e871e194bb3ba275a90d25df518da4f1cc19ef` |
+| **agama_seal package** | `0x78e24bc0a7e5de42d5a6f93dc8d254f75986e4cfab6ea95946680755ecb41ed6` |
+| **AccessPolicy** (allowlist) | `0x6983f5ea3f67811beb06ef956a1c457b5fdd979992a753313080c8e8df1792f1` |
+| AccessAdminCap | `0xe82340aaff1468ce85e9606ecac08fc9503c972d4983b8ad8548dc3c081da432` |
 | Seal key servers (Mysten testnet, threshold 2) | `0x73d05d62…356db75`, `0xf5d14a81…591623c8` |
 
 ## Nautilus — attested NAV verifier
 
 | What | Object ID |
 |---|---|
-| **agama_attest package** | `0x476d7719489d21ecdb931abe4f9b3d1cdf680a0e79e35b572969a533f6c63e7a` |
-| **AttestationRegistry** | `0x7f6e8a0dd75f36c6a43647913d4c8f1532c5ce36a2f5972bf571db0d804c64f7` |
+| **agama_attest package** | `0x180625afa71d367804197147af32a3e2ca27d032fd0bea80aad5d684f0f2a795` |
+| **AttestationRegistry** | `0xa5057a9a3439b70ba026632561c7dd07efe92389f7d927d4378cb6189234bbad` |
 
 ## Walrus — deal docs
 
