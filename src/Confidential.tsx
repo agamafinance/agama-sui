@@ -63,6 +63,23 @@ export function ConfidentialApp() {
     return r;
   }
 
+  // Merge (updateBalance) can fail with EBalanceProofFailed if the proof was
+  // built against a stale state (wrap not yet propagated). Retry with a delay.
+  async function mergeWithRetry(tokenAccount: TokenAccount, label: string) {
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      try {
+        await exec(label, async (t) => { t.add(await client.contra.updateBalance({ tokenAccount, merge: true })); });
+        return;
+      } catch (e: any) {
+        const msg = String(e?.message ?? e);
+        if (attempt < 3 && /BalanceProof|abort code: 5|resolution failed|Missing/i.test(msg)) {
+          push(`Merge retry ${attempt} (attente propagation)…`, true);
+          await new Promise((r) => setTimeout(r, 3500));
+        } else { throw e; }
+      }
+    }
+  }
+
   // Derive a deterministic viewing key from a wallet signature (ed25519 is
   // deterministic, so the same wallet always yields the same key → you can
   // decrypt across sessions). Only you ever hold this key.
@@ -131,9 +148,9 @@ export function ConfidentialApp() {
         const ag = t.moveCall({ target: `${AGUSD_PKG}::agusd::mint`, arguments: [t.object(POOL), usdc] });
         t.add(client.contra.wrap({ coin: ag, receiver: owner, tokenType: AGUSD_TYPE }));
       });
-      await exec("Merge → balance chiffrée active", async (t) => {
-        t.add(await client.contra.updateBalance({ tokenAccount: ta, merge: true }));
-      });
+      setBusy("Propagation du wrap (finalité)…");
+      await new Promise((r) => setTimeout(r, 4000));
+      await mergeWithRetry(ta, "Merge → balance chiffrée active");
       await refresh();
     } catch (e: any) { push("Dépôt — " + String(e?.message ?? e).slice(0, 90), false); }
     setBusy("");
@@ -174,7 +191,11 @@ export function ConfidentialApp() {
         const sag = t.moveCall({ target: `${AGUSD_PKG}::sagusd::stake`, arguments: [t.object(VAULT), ag] });
         t.add(client.contra.wrap({ coin: sag, receiver: owner, tokenType: SAGUSD_TYPE }));
       });
-      await exec("Merge csagUSD → balance chiffrée active", async (t) => { t.add(await client.contra.updateBalance({ tokenAccount: taSag, merge: true })); });
+      // Wait for the wrap to propagate before building the merge (which fetches
+      // account state to compute the balance proof — stale state → EBalanceProofFailed).
+      setBusy("Propagation du wrap (finalité)…");
+      await new Promise((r) => setTimeout(r, 4000));
+      await mergeWithRetry(taSag, "Merge csagUSD → balance chiffrée active");
       await refreshSag();
     } catch (e: any) { push("Stake confidentiel — " + String(e?.message ?? e).slice(0, 130), false); }
     setBusy("");
