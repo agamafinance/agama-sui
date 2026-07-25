@@ -89,8 +89,16 @@ export function ConfidentialApp() {
 
   async function register() {
     if (!ta) return;
-    setBusy("Création + enregistrement du compte confidentiel…");
+    setBusy("KYC : approbation de ton adresse (auto-whitelist)…");
     try {
+      // Open KYC for the demo: any address gets whitelisted via the serverless
+      // (dedicated whitelister key). Best-effort — on localhost this 404s, but a
+      // pre-whitelisted address still registers fine.
+      try {
+        const r = await fetch("/api/whitelist", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ address: owner }) });
+        if (r.ok) push("KYC approuvé (auto-whitelist ouvert)", true);
+      } catch { /* ignore, try register anyway */ }
+      setBusy("Création + enregistrement du compte confidentiel…");
       await exec("Compte confidentiel créé", (t) => {
         const a = t.add(client.contra.newAccount({ owner }));
         t.add(client.contra.shareAccount({ account: a }));
