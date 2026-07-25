@@ -96,3 +96,16 @@ Walrus (`blobId` returned) → retrieved by anyone → but only **owner** and
 
 - Walrus testnet publisher: `https://publisher.walrus-testnet.walrus.space`
 - Walrus testnet aggregator: `https://aggregator.walrus-testnet.walrus.space`
+
+## zkLogin — LP onboarding, no seed phrase
+
+`onchain/zklogin-demo.mts` runs the real zkLogin flow: an ephemeral keypair +
+max epoch + randomness → a **nonce**, a Google OAuth URL carrying that nonce,
+and the deterministic derivation of the LP's Sui address from the JWT
+(iss/aud/sub + salt) — e.g. `0x28893b56…a8a52f74`. No private key / seed phrase
+for the LP.
+
+Real + verified here: the ephemeral key, nonce, and address derivation. The
+**Google login (OAuth → JWT)** is the browser step and needs a Google OAuth
+client id (`GOOGLE_CLIENT_ID`); tx signing then uses the ephemeral key + a ZK
+proof from the Mysten prover. (This is the one piece not fully headless.)
