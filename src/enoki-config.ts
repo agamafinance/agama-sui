@@ -11,5 +11,5 @@
 //    Then paste that same Client ID into the Google provider in the Enoki portal.
 //
 // Leave empty to keep only wallet connect (Slush). No crash if unset.
-export const ENOKI_API_KEY = "";
-export const GOOGLE_CLIENT_ID = "";
+export const ENOKI_API_KEY = "enoki_public_a8425c0c9c88906c459e60881048d00f";
+export const GOOGLE_CLIENT_ID = "502362903917-59hn44ihigvg644jug0empog8ml6ns3d.apps.googleusercontent.com";
