@@ -1,0 +1,10 @@
+/private/tmp/claude-501/-Users-eden-data-real-agama/62148a3c-b155-440f-92fd-665a50d35d08/scratchpad/ct/utils/bulletproofs-wasm/target/release/deps/autocfg-4b345e586179158c.d: /Users/eden/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/autocfg-1.5.1/src/lib.rs /Users/eden/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/autocfg-1.5.1/src/error.rs /Users/eden/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/autocfg-1.5.1/src/rustc.rs /Users/eden/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/autocfg-1.5.1/src/version.rs
+
+/private/tmp/claude-501/-Users-eden-data-real-agama/62148a3c-b155-440f-92fd-665a50d35d08/scratchpad/ct/utils/bulletproofs-wasm/target/release/deps/libautocfg-4b345e586179158c.rlib: /Users/eden/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/autocfg-1.5.1/src/lib.rs /Users/eden/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/autocfg-1.5.1/src/error.rs /Users/eden/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/autocfg-1.5.1/src/rustc.rs /Users/eden/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/autocfg-1.5.1/src/version.rs
+
+/private/tmp/claude-501/-Users-eden-data-real-agama/62148a3c-b155-440f-92fd-665a50d35d08/scratchpad/ct/utils/bulletproofs-wasm/target/release/deps/libautocfg-4b345e586179158c.rmeta: /Users/eden/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/autocfg-1.5.1/src/lib.rs /Users/eden/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/autocfg-1.5.1/src/error.rs /Users/eden/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/autocfg-1.5.1/src/rustc.rs /Users/eden/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/autocfg-1.5.1/src/version.rs
+
+/Users/eden/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/autocfg-1.5.1/src/lib.rs:
+/Users/eden/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/autocfg-1.5.1/src/error.rs:
+/Users/eden/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/autocfg-1.5.1/src/rustc.rs:
+/Users/eden/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/autocfg-1.5.1/src/version.rs:

@@ -1,0 +1,11 @@
+/w/target/wasm32-unknown-unknown/release/deps/ark_secp256k1-908cb62473b58d00.d: /usr/local/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ark-secp256k1-0.4.0/src/lib.rs /usr/local/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ark-secp256k1-0.4.0/src/curves/mod.rs /usr/local/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ark-secp256k1-0.4.0/src/fields/mod.rs /usr/local/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ark-secp256k1-0.4.0/src/fields/fq.rs /usr/local/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ark-secp256k1-0.4.0/src/fields/fr.rs
+
+/w/target/wasm32-unknown-unknown/release/deps/libark_secp256k1-908cb62473b58d00.rlib: /usr/local/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ark-secp256k1-0.4.0/src/lib.rs /usr/local/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ark-secp256k1-0.4.0/src/curves/mod.rs /usr/local/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ark-secp256k1-0.4.0/src/fields/mod.rs /usr/local/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ark-secp256k1-0.4.0/src/fields/fq.rs /usr/local/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ark-secp256k1-0.4.0/src/fields/fr.rs
+
+/w/target/wasm32-unknown-unknown/release/deps/libark_secp256k1-908cb62473b58d00.rmeta: /usr/local/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ark-secp256k1-0.4.0/src/lib.rs /usr/local/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ark-secp256k1-0.4.0/src/curves/mod.rs /usr/local/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ark-secp256k1-0.4.0/src/fields/mod.rs /usr/local/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ark-secp256k1-0.4.0/src/fields/fq.rs /usr/local/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ark-secp256k1-0.4.0/src/fields/fr.rs
+
+/usr/local/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ark-secp256k1-0.4.0/src/lib.rs:
+/usr/local/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ark-secp256k1-0.4.0/src/curves/mod.rs:
+/usr/local/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ark-secp256k1-0.4.0/src/fields/mod.rs:
+/usr/local/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ark-secp256k1-0.4.0/src/fields/fq.rs:
+/usr/local/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ark-secp256k1-0.4.0/src/fields/fr.rs:

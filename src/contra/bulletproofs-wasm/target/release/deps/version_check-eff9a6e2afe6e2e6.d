@@ -1,0 +1,10 @@
+/private/tmp/claude-501/-Users-eden-data-real-agama/62148a3c-b155-440f-92fd-665a50d35d08/scratchpad/ct/utils/bulletproofs-wasm/target/release/deps/version_check-eff9a6e2afe6e2e6.d: /Users/eden/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/version_check-0.9.5/src/lib.rs /Users/eden/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/version_check-0.9.5/src/version.rs /Users/eden/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/version_check-0.9.5/src/channel.rs /Users/eden/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/version_check-0.9.5/src/date.rs
+
+/private/tmp/claude-501/-Users-eden-data-real-agama/62148a3c-b155-440f-92fd-665a50d35d08/scratchpad/ct/utils/bulletproofs-wasm/target/release/deps/libversion_check-eff9a6e2afe6e2e6.rlib: /Users/eden/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/version_check-0.9.5/src/lib.rs /Users/eden/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/version_check-0.9.5/src/version.rs /Users/eden/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/version_check-0.9.5/src/channel.rs /Users/eden/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/version_check-0.9.5/src/date.rs
+
+/private/tmp/claude-501/-Users-eden-data-real-agama/62148a3c-b155-440f-92fd-665a50d35d08/scratchpad/ct/utils/bulletproofs-wasm/target/release/deps/libversion_check-eff9a6e2afe6e2e6.rmeta: /Users/eden/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/version_check-0.9.5/src/lib.rs /Users/eden/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/version_check-0.9.5/src/version.rs /Users/eden/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/version_check-0.9.5/src/channel.rs /Users/eden/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/version_check-0.9.5/src/date.rs
+
+/Users/eden/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/version_check-0.9.5/src/lib.rs:
+/Users/eden/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/version_check-0.9.5/src/version.rs:
+/Users/eden/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/version_check-0.9.5/src/channel.rs:
+/Users/eden/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/version_check-0.9.5/src/date.rs:
