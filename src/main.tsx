@@ -2,13 +2,28 @@ import React from "react";
 import { createRoot } from "react-dom/client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { SuiClientProvider, WalletProvider } from "@mysten/dapp-kit";
+import { SuiClient } from "@mysten/sui/client";
+import { registerEnokiWallets } from "@mysten/enoki";
 import "@mysten/dapp-kit/dist/index.css";
 import { App } from "./App.tsx";
 import { TestApp } from "./Test.tsx";
+import { ENOKI_API_KEY, GOOGLE_CLIENT_ID } from "./enoki-config";
 import "./styles.css";
 
 const queryClient = new QueryClient();
-const networks = { testnet: { url: "https://sui-testnet-rpc.publicnode.com" } };
+const TESTNET_URL = "https://sui-testnet-rpc.publicnode.com";
+const networks = { testnet: { url: TESTNET_URL } };
+
+// Register "Sign in with Google" (zkLogin via Enoki) into the wallet modal, if configured.
+if (ENOKI_API_KEY && GOOGLE_CLIENT_ID) {
+  const enokiClient = new SuiClient({ url: TESTNET_URL });
+  registerEnokiWallets({
+    apiKey: ENOKI_API_KEY,
+    providers: { google: { clientId: GOOGLE_CLIENT_ID, redirectUrl: window.location.origin } },
+    client: enokiClient as any,
+    network: "testnet",
+  });
+}
 // Default landing is the interactive LP flow (wallet connect). The full
 // info dashboard lives at #dashboard.
 const isDashboard = typeof window !== "undefined" && window.location.hash.replace(/^#\/?/, "") === "dashboard";
