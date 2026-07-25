@@ -268,7 +268,7 @@ export function App() {
           <h1>Agama <span className="mul">×</span> Sui Spheres</h1>
           <p className="tag">Private-credit vaults in a Sphere · a synthetic dollar the public can verify but never see into</p>
         </div>
-        <div className="live">● running locally</div>
+        <div className="live">● live · agUSD on Sui testnet</div>
       </header>
 
       {/* Controls */}
