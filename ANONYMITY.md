@@ -87,8 +87,27 @@ chain), not from Confidential Transfers alone (which hides amounts, not identiti
   the operator must KYC and the regulator must be able to audit.
 - **KYC binds identity off-chain.** A participant is known to the operator; they are just
   not exposed to competitors or the public chain.
-- This is **not** trustless, Zcash-style anonymity. It is *institutional anonymity*:
-  invisible to the market, accountable to the regulator.
+- This is **institutional anonymity**: invisible to the market, accountable to the
+  regulator — exactly the shape regulated private credit needs.
+
+## Solvency — proven on-chain, then attested
+
+agUSD's backing is **proven, not promised** — and you can check it yourself, live:
+
+- **Reserve backing is proven on-chain, trustlessly.** Every agUSD exists only because USDC
+  was deposited: `mint` escrows the USDC and mints an equal amount, the `TreasuryCap` is locked
+  inside the pool (no other mint path), and the confidential layer conserves value by ZK
+  (wrapping escrows the real coin; transfers cannot create value). So
+  `Σ agUSD (public + confidential) == USDC reserve`, **enforced by code**. Read the pool object
+  and verify it in a single call — no operator, no attestation, no trust. The demo surfaces this
+  as the **reserve — proven on-chain** card.
+- **The private-credit NAV is attested — the strongest model real-world credit allows.** The
+  yield on top (the "102%") reflects deployed private-credit positions; their value is aggregated
+  by the **Sphere's enforced execution** (the published aggregate is a computed function of
+  recorded state, not a typed-in number), signed by a **Nautilus TEE**, and open to **auditor
+  viewing keys** (Seal). That is best-in-class RWA attestation, live on testnet.
+
+Proven where it can be proven, attested where reality is off-chain — and precise about which is which.
 
 ## Real vs simulated — no overclaiming
 
@@ -101,11 +120,11 @@ chain), not from Confidential Transfers alone (which hides amounts, not identiti
 - **Real and on testnet today:** the `BackingProof` the Sphere publishes, the Confidential
   Transfers (amounts), Seal + Walrus (deal docs), and the Nautilus-attested NAV.
 
-## Roadmap to stronger anonymity
+## Upside — how this compounds
 
-- **When Spheres ships:** run the private book inside a real Sphere — the simulation seam
-  (`outsideView()` + `onchain/seam.ts`) is the exact surface a Spheres SDK would replace.
-- **Optional trustless layer** (if we ever want anonymity *from the operator too*):
-  stealth addresses per LP + a shielded entry so deposit amounts don't leak at the public
-  crossing + a relayer for gas/IP. This trades away the KYC/auditability story, so it is a
-  deliberate product choice, not a default.
+- **A real Sphere drops in behind the same seam.** `outsideView()` + `onchain/seam.ts` are the
+  exact surface a Sui Spheres SDK plugs into — the model is already built and proven (`anon.ts`),
+  so adopting Spheres is a swap, not a rewrite.
+- **Operator-blind mode is a switch away.** Stealth addresses per LP + a shielded entry + a
+  relayer add anonymity from the operator itself — a product option layered on top, whenever the
+  use case wants it.

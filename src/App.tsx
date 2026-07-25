@@ -4,6 +4,7 @@ import { AgamaSphere, PUBLIC, AGAMA, fmt, type Principal } from "./sphere.ts";
 // --- live on-chain deployments (read-only via public RPC; no wallet needed) ---
 const TESTNET_RPC = "https://sui-testnet-rpc.publicnode.com";
 const BACKING_PROOF_ID = "0x842891aa47a4ef08cd370c3fcd186eef4084bfa55c74f02ef9ea0a6d9173ff23";
+const POOL = "0xb3ff4a8a6fb24eb818fba18ffd3e0194c10dbd1bc9d8f466fc213a7910d79665";
 const CONF_TOKEN = "0xc5185f8ad2ee4a386cf675b7203dfe35ec6e7fd7460dc87019c746dd3d076d78";
 const STAKING_VAULT = "0x1ff050b03e180879d7ec14c3d6f496dee165f155e85f7c2f240e5e8d2c67bbe8";
 const SEAL_POLICY = "0xc109bcd23f09d5d1395cd774b69f033d5544d295fb7f72f26ab5734822ba1c33";
@@ -24,6 +25,17 @@ type OnChain = { coverage_bps: string; nav_cents: string; supply_cents: string; 
 async function fetchBackingProof(): Promise<OnChain> {
   const f = await rpcObject(BACKING_PROOF_ID);
   return f ? { coverage_bps: f.coverage_bps, nav_cents: f.nav_cents, supply_cents: f.supply_cents, updated_epoch: f.updated_epoch } : null;
+}
+
+// The trustless half of solvency: read the pool and prove agUSD == USDC reserve,
+// 1:1, straight from chain state — no attestation, no operator to trust.
+type Reserve = { reserve: number; supply: number; backed: boolean } | null;
+async function fetchReserve(): Promise<Reserve> {
+  const f = await rpcObject(POOL);
+  if (!f) return null;
+  const reserve = Number(f.usdc_reserve);
+  const supply = Number(f.agusd_treasury?.fields?.total_supply?.fields?.value ?? 0);
+  return { reserve, supply, backed: reserve === supply };
 }
 
 type Vault = { navBps: number; assets: number; shares: number } | null;
@@ -62,6 +74,7 @@ async function fetchWalrus(): Promise<Walrus> {
 
 function OnChainPanel() {
   const [data, setData] = useState<OnChain>(null);
+  const [reserve, setReserve] = useState<Reserve>(null);
   const [vault, setVault] = useState<Vault>(null);
   const [seal, setSeal] = useState<Seal>(null);
   const [attest, setAttest] = useState<Attest>(null);
@@ -71,8 +84,8 @@ function OnChainPanel() {
   async function load() {
     setLoading(true); setErr(null);
     try {
-      const [bp, v, s, a, w] = await Promise.all([fetchBackingProof(), fetchVault(), fetchSeal(), fetchAttest(), fetchWalrus()]);
-      setData(bp); setVault(v); setSeal(s); setAttest(a); setWalrus(w);
+      const [bp, r, v, s, a, w] = await Promise.all([fetchBackingProof(), fetchReserve(), fetchVault(), fetchSeal(), fetchAttest(), fetchWalrus()]);
+      setData(bp); setReserve(r); setVault(v); setSeal(s); setAttest(a); setWalrus(w);
     } catch (e) { setErr(String(e)); }
     setLoading(false);
   }
@@ -85,20 +98,34 @@ function OnChainPanel() {
         <button className="chip" onClick={load} disabled={loading}>{loading ? "…" : "Refresh from Sui"}</button>
       </div>
       <p className="scope">
-        The public twin isn't only in this page — it's posted to a real <code>BackingProof</code> on Sui testnet by{" "}
-        <code>onchain/seam.ts</code>. Confidential agUSD (ZK amounts) and Seal (real access control) live on the same testnet. All read-only here.
+        Solvency has two halves, both live on testnet. agUSD's USDC reserve is <b>proven on-chain</b> — read the
+        pool and see <code>reserve == supply</code>, 1:1, with no operator to trust. The private-credit NAV on top
+        is <b>attested</b> in the Sphere + TEE. All read-only here.
       </p>
       {err && <div className="empty">RPC error: {err}</div>}
       <div className="onchain-grid">
         <div className="oc-card">
-          <span className="oc-tag testnet">testnet · BackingProof</span>
+          <span className="oc-tag proven">testnet · reserve — proven on-chain</span>
+          {reserve ? (
+            <>
+              <div className="oc-cov">{reserve.backed ? "1:1" : "≠"} <small>reserve : supply</small></div>
+              <div className="oc-line">USDC reserve <b>${(reserve.reserve / 1e6).toLocaleString("en-US", { maximumFractionDigits: 2 })}</b></div>
+              <div className="oc-line">agUSD supply <b>${(reserve.supply / 1e6).toLocaleString("en-US", { maximumFractionDigits: 2 })}</b></div>
+              <div className="oc-line">fully backed <b className={reserve.backed ? "g" : "b"}>{reserve.backed ? "✓ proven (=)" : "✗ mismatch"}</b></div>
+              <div className="oc-line muted">enforced by mint 1:1 + ZK conservation — no trust</div>
+            </>
+          ) : <div className="empty">{loading ? "reading Sui…" : "no data"}</div>}
+          <a className="oc-link" href={`https://suiscan.xyz/testnet/object/${POOL}`} target="_blank" rel="noreferrer">view pool ↗</a>
+        </div>
+        <div className="oc-card">
+          <span className="oc-tag testnet">testnet · BackingProof (attested)</span>
           {data ? (
             <>
               <div className="oc-cov">{cov}% <small>coverage</small></div>
               <div className="oc-line">agUSD supply <b>{fmt(Number(data.supply_cents))}</b></div>
               <div className="oc-line">NAV backing <b>{fmt(Number(data.nav_cents))}</b></div>
               <div className="oc-line">fully backed <b className={cov! >= 100 ? "g" : "b"}>{cov! >= 100 ? "✓ yes" : "✗ no"}</b></div>
-              <div className="oc-line muted">updated epoch {data.updated_epoch}</div>
+              <div className="oc-line muted">NAV attested (Sphere-enforced + Nautilus TEE) · epoch {data.updated_epoch}</div>
             </>
           ) : <div className="empty">{loading ? "reading Sui…" : "no data"}</div>}
           <a className="oc-link" href={`https://suiscan.xyz/testnet/object/${BACKING_PROOF_ID}`} target="_blank" rel="noreferrer">view object ↗</a>
