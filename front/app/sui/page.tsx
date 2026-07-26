@@ -4,7 +4,7 @@ import dynamic from 'next/dynamic';
 import { Space_Grotesk } from 'next/font/google';
 import { SUI, explorerObject } from '@/lib/sui/config';
 import { useConfidential } from '@/lib/sui/ConfidentialContext';
-import { CREDIT_VAULTS, CURATORS, ALLOC_BPS, blendedApy, type CreditVault, type Curator } from '@/lib/sui/vaults';
+import { CREDIT_VAULTS, CURATORS, ALLOC_BPS, VAULT_OBJECTS, blendedApy, type CreditVault, type Curator } from '@/lib/sui/vaults';
 
 // The full confidential flow (contra SDK + wasm + Seal) is client-only.
 const ConfidentialFlow = dynamic(
@@ -102,10 +102,10 @@ function Stat({ label, value, hidden, onReveal }: { label: string; value: string
 function CreditVaultCard({ v, allocPct }: { v: CreditVault; allocPct?: number }) {
   return (
     <a
-      href={explorerObject(SUI.pkg)}
+      href={explorerObject(VAULT_OBJECTS[v.name] ?? SUI.pkg)}
       target="_blank"
       rel="noreferrer"
-      className="flex flex-col rounded-2xl bg-[#fdfaf1] p-5 shadow-[0_1px_3px_rgba(20,50,35,0.06),0_10px_30px_rgba(20,50,35,0.09)]">
+      className="flex flex-col rounded-2xl bg-[#fdfaf1] p-5 shadow-[0_1px_3px_rgba(20,50,35,0.06),0_10px_30px_rgba(20,50,35,0.09)] hover:ring-1 hover:ring-[#254839]/20 transition">
       <div className="flex items-start gap-3">
         <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white ring-1 ring-[#254839]/10">
           <img src={v.curator.logo} alt={v.curator.name} className="h-[22px] w-[22px] object-contain" />

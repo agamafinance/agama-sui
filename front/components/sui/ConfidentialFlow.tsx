@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { ArrowDown, Check } from 'lucide-react';
+import { ArrowDown, Check, EyeOff, Lock } from 'lucide-react';
 import { TokenIcon } from '@/components/icons/TokenIcon';
 import { useConfidential } from '@/lib/sui/ConfidentialContext';
 import {
@@ -19,7 +19,7 @@ import { DiscreteLogTable } from '@/lib/sui/contra/twisted_elgamal';
 import { TokenAccount } from '@/lib/sui/contra/token_account';
 import { GROUP_ORDER } from '@/lib/sui/contra/ristretto255';
 import { point } from '@/lib/sui/contra/helpers';
-import { useSuiState } from '@/lib/sui/hooks';
+import { useSuiState, useNav } from '@/lib/sui/hooks';
 import { useSui } from '@/lib/sui/SuiContext';
 import { SUI, toBaseUnits, fromBaseUnits } from '@/lib/sui/config';
 
@@ -63,6 +63,7 @@ export function ConfidentialFlow() {
   const { mutateAsync: signMsg } = useSignPersonalMessage();
   const { mutateAsync: signExec } = useSignAndExecuteTransaction();
   const { data: suiState } = useSuiState();
+  const { data: nav = 1 } = useNav(); // sagUSD NAV per share — stake output = cagUSD / nav
   const { refresh: refreshSui } = useSui();
   const owner = account?.address ?? '';
   const usdcBal = suiState?.user?.usdc ?? null; // real wallet USDC that deposits consume
@@ -114,6 +115,7 @@ decrypt. Sealed via threshold MPC, stored on Walrus.`,
   );
   const [sealBlobId, setSealBlobId] = useState<string | null>(null);
   const [sealDecrypted, setSealDecrypted] = useState<string | null>(null);
+  const [sealRevealed, setSealRevealed] = useState(false); // true = decrypted & editable; false w/ blob = masked
   const [transferred, setTransferred] = useState(false);
   const [busy, setBusy] = useState('');
   const [log, setLog] = useState<Log[]>([]);
@@ -339,6 +341,7 @@ decrypt. Sealed via threshold MPC, stored on Walrus.`,
       const blobId = pj.newlyCreated?.blobObject?.blobId ?? pj.alreadyCertified?.blobId;
       setSealBlobId(blobId);
       setSealDecrypted(null);
+      setSealRevealed(false); // now sealed → masked, only Decrypt available
       push(`Deal doc encrypted (Seal) + stored on Walrus · blob ${String(blobId).slice(0, 14)}…`, true);
     } catch (e: any) {
       push('Seal store — ' + String(e?.message ?? e).slice(0, 120), false);
@@ -360,7 +363,10 @@ decrypt. Sealed via threshold MPC, stored on Walrus.`,
       tx.moveCall({ target: `${SEAL_PKG}::access::seal_approve`, arguments: [tx.pure.vector('u8', Array.from(fromHex(sealIdentity(owner)))), tx.object(SEAL_POLICY)] });
       const txBytes = await tx.build({ client: suiClient as any, onlyTransactionKind: true });
       const dec = await sealClient().decrypt({ data: ct, sessionKey: sk, txBytes });
-      setSealDecrypted(new TextDecoder().decode(dec));
+      const text = new TextDecoder().decode(dec);
+      setSealDecrypted(text);
+      setDealDoc(text);       // show the plaintext back in the (now editable) textarea
+      setSealRevealed(true);  // decrypted → editable again, can re-encrypt
       push('Deal doc decrypted — you are authorized by seal_approve (owner) ✓', true);
     } catch (e: any) {
       push('Seal decrypt — ' + String(e?.message ?? e).slice(0, 120), false);
@@ -391,6 +397,7 @@ decrypt. Sealed via threshold MPC, stored on Walrus.`,
           balance={balance}
           sagBalance={sagBalance}
           usdcBal={usdcBal}
+          nav={nav}
           registered={registered}
           disabled={disabled}
           busy={busy}
@@ -398,26 +405,36 @@ decrypt. Sealed via threshold MPC, stored on Walrus.`,
           onStake={() => stakeConfidential(amount)}
           onTransfer={() => transferPrivate(amount, recipient)}
         />
-        <StepRow n="6" done={!!sealDecrypted} title="Seal — my private LP document" blurb="Your side letter / allocation terms — what you don't want competitors to see. Sealed by threshold MPC, stored on Walrus; only you or the Agama allowlist can decrypt.">
+        <StepRow n="6" done={!!sealBlobId} title="Seal — my private LP document" blurb="Your side letter / allocation terms — what you don't want competitors to see. Sealed by threshold MPC, stored on Walrus; only you or the Agama allowlist can decrypt.">
           <div className="w-full md:w-[440px]">
-            <textarea
-              value={dealDoc}
-              onChange={(e) => setDealDoc(e.target.value)}
-              rows={15}
-              className="w-full box-border rounded-lg bg-white ring-1 ring-[#254839]/12 px-3 py-2.5 text-[11.5px] leading-[1.5] text-fg font-mono resize-y"
-            />
+            {!!sealBlobId && !sealRevealed ? (
+              // SEALED — content masked; only Decrypt is available.
+              <div className="flex flex-col items-center justify-center gap-2 rounded-lg bg-[#254839]/[0.05] ring-1 ring-[#254839]/12 py-12 text-fg-muted">
+                <Lock className="h-6 w-6 text-[#254839]/50" />
+                <div className="text-[12.5px] font-medium text-[#254839]/70">Sealed — decrypt to view</div>
+                <div className="text-[14px] tracking-[0.35em] text-[#254839]/30">••••••••••••••</div>
+              </div>
+            ) : (
+              // DRAFT or DECRYPTED — editable.
+              <textarea
+                value={dealDoc}
+                onChange={(e) => setDealDoc(e.target.value)}
+                rows={15}
+                className="w-full box-border rounded-lg bg-white ring-1 ring-[#254839]/12 px-3 py-2.5 text-[11.5px] leading-[1.5] text-fg font-mono resize-y"
+              />
+            )}
             <div className="mt-2 flex flex-wrap gap-2">
-              <button type="button" disabled={disabled} onClick={sealStore} className="h-9 px-3 rounded-full bg-[#254839]/[0.08] text-[#254839] text-[13px] font-medium hover:bg-[#254839]/[0.16] disabled:opacity-40">
-                Encrypt (Seal) + store (Walrus)
-              </button>
-              {sealBlobId && (
-                <button type="button" disabled={disabled} onClick={sealDecrypt} className="h-9 px-3 rounded-full bg-[#254839] text-[#fdf8ed] text-[13px] font-medium hover:bg-[#1F3D31] disabled:opacity-40">
-                  Decrypt (owner)
+              {!!sealBlobId && !sealRevealed ? (
+                <button type="button" disabled={disabled} onClick={sealDecrypt} className="inline-flex items-center gap-1.5 h-9 px-3 rounded-full bg-[#254839] text-[#fdf8ed] text-[13px] font-medium hover:bg-[#1F3D31] disabled:opacity-40">
+                  <EyeOff className="h-3.5 w-3.5" /> Decrypt (owner)
+                </button>
+              ) : (
+                <button type="button" disabled={disabled} onClick={sealStore} className="h-9 px-3 rounded-full bg-[#254839]/[0.08] text-[#254839] text-[13px] font-medium hover:bg-[#254839]/[0.16] disabled:opacity-40">
+                  {sealBlobId ? 'Re-encrypt (Seal) + store (Walrus)' : 'Encrypt (Seal) + store (Walrus)'}
                 </button>
               )}
             </div>
             {sealBlobId && <div className="mt-1.5 text-[11px] text-fg-muted">Walrus blob {sealBlobId.slice(0, 16)}… · public bytes, Seal-gated content</div>}
-            {sealDecrypted && <div className="mt-1.5 rounded-lg bg-[#254839]/[0.06] px-3 py-2 text-[12.5px] text-fg">🔓 decrypted (you only): <b>{sealDecrypted}</b></div>}
           </div>
         </StepRow>
       </div>
@@ -473,14 +490,14 @@ function TokenPill({ sym }: { sym: string }) {
 // transfer (cagUSD→recipient), all with hidden amounts. Mirrors the public swap UX.
 function ConfidentialSwap({
   mode, setMode, amount, setAmount, recipient, setRecipient,
-  balance, sagBalance, usdcBal, registered, disabled, busy,
+  balance, sagBalance, usdcBal, nav, registered, disabled, busy,
   onDeposit, onStake, onTransfer,
 }: {
   mode: 'deposit' | 'stake' | 'transfer';
   setMode: (m: 'deposit' | 'stake' | 'transfer') => void;
   amount: string; setAmount: (s: string) => void;
   recipient: string; setRecipient: (s: string) => void;
-  balance: string | null; sagBalance: string | null; usdcBal: bigint | null;
+  balance: string | null; sagBalance: string | null; usdcBal: bigint | null; nav: number;
   registered: boolean; disabled: boolean; busy: string;
   onDeposit: () => void; onStake: () => void; onTransfer: () => void;
 }) {
@@ -488,6 +505,10 @@ function ConfidentialSwap({
   // so "deposit all" doesn't round up past what you actually hold.
   const usdcStr = usdcBal !== null ? (Math.floor(Number(usdcBal) / 1e4) / 100).toFixed(2) : '—';
   const usdcMax = usdcBal !== null ? (Number(usdcBal) / 1e6).toString() : '0';
+  // Estimated output: deposit is 1:1 (cagUSD); stake is cagUSD / NAV (csagUSD shares).
+  const amtN = Number(amount) || 0;
+  const estOut = mode === 'stake' ? amtN / (nav || 1) : amtN;
+  const estStr = estOut > 0 ? estOut.toLocaleString('en-US', { maximumFractionDigits: mode === 'stake' ? 4 : 2 }) : '0.0';
   const fromSym = mode === 'deposit' ? 'USDC' : 'cagUSD';
   const toSym = mode === 'stake' ? 'csagUSD' : 'cagUSD';
   const actionLabel = mode === 'deposit' ? 'Deposit privately' : mode === 'stake' ? 'Stake privately' : 'Send privately';
@@ -552,7 +573,7 @@ function ConfidentialSwap({
             className="mt-1 h-9 w-full bg-transparent text-[14px] text-fg placeholder:text-fg-muted/40 focus:outline-none" />
         ) : (
           <div className="mt-1 flex items-center gap-3">
-            <div className="h-9 w-full text-[24px] text-fg tabular-nums">{amount || '0.0'}</div>
+            <div className="h-9 w-full text-[24px] text-fg tabular-nums">{estStr}</div>
             <TokenPill sym={toSym} />
           </div>
         )}
