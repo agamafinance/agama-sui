@@ -268,7 +268,7 @@ decrypt. Sealed via threshold MPC, stored on Walrus.`,
   }
 
   async function stakeConfidential(amountStr: string) {
-    if (!taSag) return;
+    if (!ta || !taSag) return;
     const amt = toBaseUnits(amountStr);
     if (amt <= 0n) return;
     setBusy('Confidential stake: preparing…');
@@ -283,10 +283,11 @@ decrypt. Sealed via threshold MPC, stored on Walrus.`,
           });
         });
       }
-      setBusy('Confidential stake: USDC → agUSD → sagUSD → csagUSD (encrypted)…');
-      await exec(`Confidential stake: ${amountStr} → csagUSD (encrypted yield)`, async (t) => {
-        const usdc = await coinFromWallet(t, SUI.types.usdc, amt); // consume real USDC
-        const ag = t.moveCall({ target: `${AGUSD_PKG}::agusd::mint`, arguments: [t.object(POOL), usdc] });
+      setBusy('Confidential stake: cagUSD → csagUSD (unwrap + stake + wrap, encrypted)…');
+      await exec(`Confidential stake: ${amountStr} cagUSD → csagUSD (encrypted yield)`, async (t) => {
+        // Unwrap cagUSD → Coin<agUSD> (ZK proof), stake it, wrap the sagUSD into csagUSD.
+        const unwrapFn = await client.contra.unwrap({ tokenAccount: ta, amount: amt });
+        const ag = t.add(unwrapFn);
         const sag = t.moveCall({ target: `${AGUSD_PKG}::sagusd::stake`, arguments: [t.object(VAULT), ag] });
         t.add(client.contra.wrap({ coin: sag, receiver: owner, tokenType: SAGUSD_TYPE }));
       });
@@ -294,7 +295,7 @@ decrypt. Sealed via threshold MPC, stored on Walrus.`,
       await new Promise((r) => setTimeout(r, 4000));
       await mergeWithRetry(taSag, 'Merge csagUSD → active encrypted balance');
       await refreshSag();
-      refreshSui();
+      await refresh(); // cagUSD balance decreased
     } catch (e: any) {
       push('Confidential stake — ' + String(e?.message ?? e).slice(0, 140), false);
     }
@@ -487,13 +488,13 @@ function ConfidentialSwap({
   // so "deposit all" doesn't round up past what you actually hold.
   const usdcStr = usdcBal !== null ? (Math.floor(Number(usdcBal) / 1e4) / 100).toFixed(2) : '—';
   const usdcMax = usdcBal !== null ? (Number(usdcBal) / 1e6).toString() : '0';
-  const fromSym = mode === 'transfer' ? 'cagUSD' : 'USDC';
+  const fromSym = mode === 'deposit' ? 'USDC' : 'cagUSD';
   const toSym = mode === 'stake' ? 'csagUSD' : 'cagUSD';
   const actionLabel = mode === 'deposit' ? 'Deposit privately' : mode === 'stake' ? 'Stake privately' : 'Send privately';
   const hint =
-    mode === 'deposit' ? 'Mint + wrap — your balance becomes an ElGamal ciphertext on-chain.'
-    : mode === 'stake' ? 'Stake into yield-bearing csagUSD — the staked amount stays encrypted.'
-    : 'ZK range proof generated in your browser — the amount is hidden on-chain.';
+    mode === 'deposit' ? 'Mint and wrap into cagUSD; your balance becomes an ElGamal ciphertext on-chain.'
+    : mode === 'stake' ? 'Unwrap cagUSD and stake into yield-bearing csagUSD; the amount stays encrypted.'
+    : 'ZK range proof generated in your browser; the amount is hidden on-chain.';
   const run = mode === 'deposit' ? onDeposit : mode === 'stake' ? onStake : onTransfer;
   const tabs = [
     { id: 'deposit' as const, label: 'Deposit' },
@@ -522,8 +523,8 @@ function ConfidentialSwap({
       <div className="mt-3 rounded-2xl bg-white ring-1 ring-[#254839]/12 px-4 py-3 focus-within:ring-[#254839]/35">
         <div className="flex items-center justify-between text-[11px] uppercase tracking-wider text-fg-muted">
           <span>From</span>
-          <button type="button" onClick={() => setAmount(mode === 'transfer' ? (balance ?? '0') : usdcMax)} className="hover:text-fg">
-            {mode === 'transfer' ? `Balance ${balance ?? '—'} cagUSD` : `Balance ${usdcStr} USDC`} · Max
+          <button type="button" onClick={() => setAmount(mode === 'deposit' ? usdcMax : (balance ?? '0'))} className="hover:text-fg">
+            {mode === 'deposit' ? `Balance ${usdcStr} USDC` : `Balance ${balance ?? '—'} cagUSD`} · Max
           </button>
         </div>
         <div className="mt-1 flex items-center gap-3">
