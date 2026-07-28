@@ -4,7 +4,7 @@
  * CREDIT / PATTERN SOURCE
  * -----------------------
  * This module follows the reference Sui Spheres pattern published by
- * Abhinav Gupta (@abhinavg6), a Product Manager at Mysten Labs:
+ * Abhinav Garg (@abhinavg6), a Product Manager at Mysten Labs:
  *   https://github.com/abhinavg6/sui-spheres-supplychain-finance
  *
  * That reference is itself a *simulation* — its README states "Everything is

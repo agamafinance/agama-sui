@@ -34,18 +34,12 @@ const NAV: Record<Platform, { href: string; label: string }[]> = {
     { href: '/sui', label: 'Earn' },
     { href: '/sui/faucet', label: 'Faucet' },
   ],
-  robinhood: [
-    { href: '/robinhood/portfolio', label: 'Portfolio' },
-    { href: '/robinhood', label: 'Earn' },
-    { href: '/robinhood/transparency', label: 'Transparency' },
-    { href: '/robinhood/faucet', label: 'Faucet' },
-  ],
+  robinhood: [],
 };
 
 const NETWORKS: { id: Platform; label: string; logo: string; home: string }[] = [
-  { id: 'robinhood', label: 'Robinhood', logo: '/robinhood.svg', home: '/robinhood' },
-  { id: 'stellar', label: 'Stellar', logo: '/stellar.svg', home: '/stellar' },
   { id: 'sui', label: 'Sui', logo: '/sui.svg', home: '/sui' },
+  { id: 'stellar', label: 'Stellar', logo: '/stellar.svg', home: '/stellar' },
 ];
 
 export function Navbar() {

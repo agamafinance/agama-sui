@@ -41,7 +41,7 @@ not, and against whom — with reproducible on-chain evidence. No hand-waving.
    Individual LP activity lives inside — so from the outside there is no person to trace.
    Sui Spheres has no public SDK yet (design-partners only, no launch date), so — like
    Mysten's own reference — this layer is **simulated**. We model it on the pattern
-   published by Abhinav Gupta (@abhinavg6), a PM at Mysten Labs:
+   published by Abhinav Garg (@abhinavg6), a PM at Mysten Labs:
    [`sui-spheres-supplychain-finance`](https://github.com/abhinavg6/sui-spheres-supplychain-finance),
    whose README likewise states *"everything is simulated locally."* Our swap-to-real
    seam is `publicTwin()` in `src/sphere.ts`. Everything below (2–3) is **real on-chain**.
